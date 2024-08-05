@@ -1,3 +1,6 @@
+body {
+  background-color: rgba(81, 9, 183, 1);
+}
 .container {
     background-color: rgba(81, 9, 183, 1);
     display: flex;
