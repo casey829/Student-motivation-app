@@ -18,10 +18,10 @@ function StudentMotivation() {
           <p className={styles.motivationalText}>
             The secret to your future is hidden in your daily routine
           </p>
-          <p className={styles.signUpText}>Sign up</p>
+          <p className={styles.signUpText}>Sign Up</p>
           <SignUpButton>Student</SignUpButton>
           <SignUpButton className={styles.staffButton}>Staff</SignUpButton>
-          <SignUpButton className={styles.loginButton}>login</SignUpButton>
+          <SignUpButton className={styles.loginButton}>Login</SignUpButton>
         </section>
       </div>
     </main>
