@@ -5,42 +5,47 @@ import { IoIosArrowDropdown } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
 
 function StaffDashboard(){
-return (
-    <div>
-      <div className="dashboard">
+  return (
+    <div className="dashboard-container">
+      <div className="sidebar">
         <div className="logo"></div>
-        <div className="dashboard">Dashboard</div>
+        <div className="dashboard-text">Dashboard</div>
       </div>
-
+<div className="add-icon-container"><div className="add-icon"><IoAddCircleOutline /></div>
+</div>
       <div className="main-content">
         <div className="header">
-          <div className="add-icon"><IoAddCircleOutline /></div>
-          <div className="user-name">Marion</div>
+          <div className="user-name">Casey</div>
         </div>
         <div className="content">
-          <div className="video-section">
-            <h2>Categorize Uploaded Videos</h2>
-            <div className="actions">
-            <button>Categorize <IoIosArrowDropdown /></button>
-            <button>Approve <FcApprove /></button>
-            <button>Flag <CiFlag1 /></button>
+      <div className="center-text"><h2>Categorize Uploaded Videos</h2></div>
+
+          <div className="section">
+         
+            <ul className="actions">
+            <li><button className="categorize-btn">Categorize <IoIosArrowDropdown /></button></li>
+      <li><button className="approve-btn">Approve <FcApprove /></button></li>
+      <li><button className="flag-btn">Flag <CiFlag1 /></button></li>
+          </ul>
           </div>
+          <div className="center-text"> <h2>Categorize Uploaded Audios</h2></div>
+          <div className="section">
+        
+            <ul className="actions">
+            <li><button className="categorize-btn">Categorize <IoIosArrowDropdown /></button></li>
+      <li><button className="approve-btn">Approve <FcApprove /></button></li>
+      <li><button className="flag-btn">Flag <CiFlag1 /></button></li>
+          </ul>
           </div>
-          <div className="audio-section">
-            <h2>Categorize Uploaded Audios</h2>
-            <div className="actions">
-            <button>Categorize <IoIosArrowDropdown /></button>
-            <button>Approve <FcApprove /></button>
-            <button>Flag <CiFlag1 /></button> <button>Flag</button>
-          </div>
-          </div>
-          <div className="article-section">
-            <h2>Categorize Uploaded Articles</h2>
-            <div className="actions">
-            <button>Categorize <IoIosArrowDropdown /></button>
-            <button>Approve <FcApprove /></button>
-            <button>Flag <CiFlag1 /></button>
-          </div>
+          
+
+          <div className="center-text"> <h2>Categorize Uploaded Articles</h2> </div>
+          <div className="section">
+            <ul className="actions">
+            <li><button className="categorize-btn">Categorize <IoIosArrowDropdown /></button></li>
+      <li><button className="approve-btn">Approve <FcApprove /></button></li>
+      <li><button className="flag-btn">Flag <CiFlag1 /></button></li>
+          </ul>
           </div>
         </div>
       </div>
