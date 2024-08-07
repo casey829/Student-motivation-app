@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from './style.css/Form.module.css';
+import styles from '../style.css/Form.module.css';
 
 const AdminLogin = ({ onClose }) => {
   const [formData, setFormData] = useState({

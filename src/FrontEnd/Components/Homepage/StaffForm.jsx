@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import styles from './style.css/Form.module.css';
+import styles from '../style.css/Form.module.css';
 
-const StaffSignup = ({ onClose }) => {
+const StaffForm = ({ onClose }) => {
   const [hasAccount, setHasAccount] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -87,4 +87,4 @@ const StaffSignup = ({ onClose }) => {
   );
 };
 
-export default StaffSignup;
+export default StaffForm;

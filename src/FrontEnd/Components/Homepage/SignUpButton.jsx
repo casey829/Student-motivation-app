@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../Homepage/style.css/StudentMotivation.module.css';
+import styles from '../style.css/StudentMotivation.module.css';
 
 const SignUpButton = ({ children, className, ...props }) => {
   return (
