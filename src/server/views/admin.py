@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import Blueprint, request, jsonify # type: ignore
-from server.models import User, Content, Category
+from models import User, Content, Category
 from app import db
 from schemas import UserSchema, ContentSchema, CategorySchema
 
