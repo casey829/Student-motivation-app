@@ -107,7 +107,7 @@
 
 from datetime import datetime
 from flask import Blueprint, request, jsonify
-from models import Content, Comment
+from server.models import Content, Comment
 from app import db
 from schemas import ContentSchema, CommentSchema
 

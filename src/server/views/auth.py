@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify # type: ignore
-from models import User
+from server.models import User
 from app import db, bcrypt
 from flask_jwt_extended import create_access_token # type: ignore
 from datetime import datetime
