@@ -1,15 +1,19 @@
-import react from 'react';
+
+import React from "react";
 import './App.css'
+import StudentSignup from "./FrontEnd/Components/StudentSignup.jsx";
+import StaffSignup from "./FrontEnd/Components/StaffSignup.jsx";
 import StaffDashboard from './FrontEnd/Components/StaffDashboard';
 import AdminDashboard from './FrontEnd/Components/AdminDashboard';
+
 function App() {
-  
   return (
-   <div>
-  <StaffDashboard/>
-  <AdminDashboard/>
-    </div>
-  )
-}
+    <div className="App">
+       <StaffDashboard/>
+      <AdminDashboard/>
+      <StudentSignup /> 
   
-export default App
+    </div>
+  );
+}
+
