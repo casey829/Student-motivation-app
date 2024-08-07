@@ -1,0 +1,825 @@
+swagger: '2.0'
+info:
+  title: "Content Management API"
+  description: "API for managing content, users, and other related operations."
+  version: "1.0.0"
+
+host: "localhost:5000"
+basePath: "/"
+
+tags:
+  - name: "admin"
+    description: "Administrative operations"
+  - name: "auth"
+    description: "Authentication operations"
+  - name: "staff"
+    description: "Staff operations"
+  - name: "student"
+    description: "Student operations"
+
+paths:
+  /admin/users:
+    post:
+      tags:
+        - "admin"
+      summary: "Add a new user"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "username"
+              - "email"
+              - "password_hash"
+              - "role"
+            properties:
+              username:
+                type: "string"
+              email:
+                type: "string"
+              password_hash:
+                type: "string"
+              role:
+                type: "string"
+      responses:
+        201:
+          description: "User added successfully"
+        400:
+          description: "Missing required fields"
+
+  /admin/users/{user_id}/deactivate:
+    patch:
+      tags:
+        - "admin"
+      summary: "Deactivate a user"
+      parameters:
+        - name: "user_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "User deactivated successfully"
+        404:
+          description: "User not found"
+
+  /admin/content/{content_id}/approve:
+    patch:
+      tags:
+        - "admin"
+      summary: "Approve specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "approved_by"
+            properties:
+              approved_by:
+                type: "string"
+      responses:
+        200:
+          description: "Content approved successfully"
+        404:
+          description: "Content not found"
+
+  /admin/content/{content_id}:
+    delete:
+      tags:
+        - "admin"
+      summary: "Remove flagged content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        204:
+          description: "Content removed successfully"
+        404:
+          description: "Content not found"
+
+  /admin/categories:
+    post:
+      tags:
+        - "admin"
+      summary: "Create a new category"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "name"
+              - "description"
+              - "created_by"
+            properties:
+              name:
+                type: "string"
+              description:
+                type: "string"
+              created_by:
+                type: "integer"
+      responses:
+        201:
+          description: "Category created successfully"
+        400:
+          description: "Invalid request payload"
+
+  /auth/register:
+    post:
+      tags:
+        - "auth"
+      summary: "Register a new user"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "username"
+              - "email"
+              - "password"
+              - "role"
+            properties:
+              username:
+                type: "string"
+              email:
+                type: "string"
+              password:
+                type: "string"
+              role:
+                type: "string"
+      responses:
+        201:
+          description: "User registered successfully"
+        400:
+          description: "Invalid request payload"
+
+  /auth/login:
+    post:
+      tags:
+        - "auth"
+      summary: "Login a user"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "email"
+              - "password"
+            properties:
+              email:
+                type: "string"
+              password:
+                type: "string"
+      responses:
+        200:
+          description: "Login successful"
+          schema:
+            type: "object"
+            properties:
+              access_token:
+                type: "string"
+        400:
+          description: "Invalid request payload"
+        401:
+          description: "Invalid credentials"
+
+  /staff/content:
+    post:
+      tags:
+        - "staff"
+      summary: "Post new content"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "title"
+              - "description"
+              - "content_type"
+              - "content_url"
+              - "category_id"
+              - "created_by"
+            properties:
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              created_by:
+                type: "integer"
+      responses:
+        201:
+          description: "Content posted successfully"
+        400:
+          description: "Invalid request payload"
+
+  /staff/content/{content_id}:
+    patch:
+      tags:
+        - "staff"
+      summary: "Edit specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+      responses:
+        200:
+          description: "Content edited successfully"
+        404:
+          description: "Content not found"
+
+  /staff/content/{content_id}:
+    delete:
+      tags:
+        - "staff"
+      summary: "Remove specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        204:
+          description: "Content removed successfully"
+        404:
+          description: "Content not found"
+
+  /staff/content/{content_id}/approve:
+    patch:
+      tags:
+        - "staff"
+      summary: "Approve specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "approved_by"
+            properties:
+              approved_by:
+                type: "string"
+      responses:
+        200:
+          description: "Content approved successfully"
+        404:
+          description: "Content not found"
+
+  /staff/content/{content_id}/flag:
+    patch:
+      tags:
+        - "staff"
+      summary: "Flag specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Content flagged successfully"
+        404:
+          description: "Content not found"
+
+  /staff/comments:
+    post:
+      tags:
+        - "staff"
+      summary: "Post a new comment"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Comment posted successfully"
+        400:
+          description: "Invalid request payload"
+
+  /staff/comments/{comment_id}/reply:
+    post:
+      tags:
+        - "staff"
+      summary: "Reply to a comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Comment replied successfully"
+        400:
+          description: "Invalid request payload"
+
+  /staff/comments/{comment_id}:
+    patch:
+      tags:
+        - "staff"
+      summary: "Edit a specific comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+      responses:
+        200:
+          description: "Comment updated successfully"
+        404:
+          description: "Comment not found"
+
+  /staff/comments/{comment_id}:
+    delete:
+      tags:
+        - "staff"
+      summary: "Delete a specific comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        204:
+          description: "Comment deleted successfully"
+        404:
+          description: "Comment not found"
+
+  /students/profile:
+    post:
+      tags:
+        - "student"
+      summary: "Create a new student profile"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "username"
+              - "email"
+              - "password_hash"
+            properties:
+              username:
+                type: "string"
+              email:
+                type: "string"
+              password_hash:
+                type: "string"
+              bio:
+                type: "string"
+              profile_picture_url:
+                type: "string"
+      responses:
+        201:
+          description: "Profile created successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              username:
+                type: "string"
+              email:
+                type: "string"
+              bio:
+                type: "string"
+              profile_picture_url:
+                type: "string"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/content:
+    get:
+      tags:
+        - "student"
+      summary: "List all content"
+      responses:
+        200:
+          description: "List of content"
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "integer"
+                title:
+                  type: "string"
+                description:
+                  type: "string"
+                content_type:
+                  type: "string"
+                content_url:
+                  type: "string"
+                category_id:
+                  type: "integer"
+                created_by:
+                  type: "integer"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+                updated_at:
+                  type: "string"
+                  format: "date-time"
+        500:
+          description: "Internal server error"
+
+  /students/content/{content_id}:
+    get:
+      tags:
+        - "student"
+      summary: "View specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "Content details"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              created_by:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        404:
+          description: "Content not found"
+        500:
+          description: "Internal server error"
+
+  /students/content:
+    post:
+      tags:
+        - "student"
+      summary: "Post new content"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "title"
+              - "content_type"
+              - "content_url"
+              - "category_id"
+              - "user_id"
+            properties:
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+      responses:
+        201:
+          description: "Content posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              title:
+                type: "string"
+              description:
+                type: "string"
+              content_type:
+                type: "string"
+              content_url:
+                type: "string"
+              category_id:
+                type: "integer"
+              created_by:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/comments:
+    post:
+      tags:
+        - "student"
+      summary: "Post a new comment"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Comment posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/comments/{comment_id}/reply:
+    post:
+      tags:
+        - "student"
+      summary: "Reply to a comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "content_id"
+              - "user_id"
+              - "text"
+            properties:
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+      responses:
+        201:
+          description: "Reply posted successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              text:
+                type: "string"
+              parent_comment_id:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        404:
+          description: "Comment not found"
+        500:
+          description: "Internal server error"
+
+  /students/wishlist:
+    post:
+      tags:
+        - "student"
+      summary: "Add content to wishlist"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: true
+          schema:
+            type: "object"
+            required:
+              - "user_id"
+              - "content_id"
+            properties:
+              user_id:
+                type: "integer"
+              content_id:
+                type: "integer"
+      responses:
+        201:
+          description: "Content added to wishlist successfully"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "integer"
+              user_id:
+                type: "integer"
+              content_id:
+                type: "integer"
+              created_at:
+                type: "string"
+                format: "date-time"
+              updated_at:
+                type: "string"
+                format: "date-time"
+        400:
+          description: "Invalid request payload"
+        500:
+          description: "Internal server error"
+
+  /students/wishlist/{wishlist_id}:
+    delete:
+      tags:
+        - "student"
+      summary: "Remove content from wishlist"
+      parameters:
+        - name: "wishlist_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        204:
+          description: "Content removed from wishlist successfully"
+        404:
+          description: "Wishlist item not found"
+        500:
+          description: "Internal server error"
+
+  /students/comments/{content_id}:
+    get:
+      tags:
+        - "student"
+      summary: "List comments for specific content"
+      parameters:
+        - name: "content_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "List of comments for the content"
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "integer"
+                content_id:
+                  type: "integer"
+                user_id:
+                  type: "integer"
+                text:
+                  type: "string"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+                updated_at:
+                  type: "string"
+                  format: "date-time"
+        404:
+          description: "Content not found"
+        500:
+          description: "Internal server error"
+
+  /students/comments/replies/{comment_id}:
+    get:
+      tags:
+        - "student"
+      summary: "List replies to a specific comment"
+      parameters:
+        - name: "comment_id"
+          in: "path"
+          required: true
+          type: "integer"
+      responses:
+        200:
+          description: "List of replies to the comment"
+          schema:
+            type: "array"
+            items:
