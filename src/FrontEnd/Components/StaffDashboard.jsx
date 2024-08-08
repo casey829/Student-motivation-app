@@ -158,7 +158,8 @@ function StaffDashboard() {
           <IoAddCircleOutline />
         </div>
       </div>
-
+<div className="add-icon-container"><div className="add-icon"><IoAddCircleOutline /></div>
+</div>
       <div className="main-content">
         <div className="header">
           <div className="user-name">{userName}</div>
