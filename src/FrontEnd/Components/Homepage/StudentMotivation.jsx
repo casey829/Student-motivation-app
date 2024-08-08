@@ -5,18 +5,26 @@ import StudentForm from './StudentForm';
 import StaffSignup from "./StaffSignup";
 import AdminLogin from './AdminLogin';
 
-
 function StudentMotivation() {
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [showStaffSignup, setShowStaffSignup] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  
 
   return (
     <main className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>STUDENT MOTIVATION</h1>
-        <img loading="lazy" src="https://cdn.builder.io/api/v1/image/assets/TEMP/73474e0484463a56c2d25f48d5170ed7de5bca6a58656e8829028c93e8b71a39?apiKey=7a11f6dc58d64669b80496691087fffa&&apiKey=7a11f6dc58d64669b80496691087fffa" className={styles.mainImage} alt="Student motivation visual representation" />
+        <h1 className={styles.title}>MOTIVATEU</h1>
+        <div className={styles.iframeContainer}>
+          <iframe
+            src="https://assets.pinterest.com/ext/embed.html?id=16255248649137682"
+            height="776"
+            width="450"
+            frameBorder="0"
+            scrolling="no"
+            title="Pinterest Embed"
+            className={styles.iframe}
+          ></iframe>
+        </div>
         <section className={styles.actionSection}>
           <p className={styles.motivationalText}>
             The secret to your future is hidden in your daily routine

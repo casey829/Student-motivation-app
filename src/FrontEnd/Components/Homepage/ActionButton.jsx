@@ -10,4 +10,3 @@ const ActionButton = ({ text, className, onClick }) => {
 };
 
 export default ActionButton;
-

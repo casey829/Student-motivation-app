@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CiFlag1 } from "react-icons/ci";
 import { FcApprove } from "react-icons/fc";
 import { IoIosArrowDropdown } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from "react-icons/ai";
+import { CiUser } from "react-icons/ci";
+import { IoIosLogOut } from "react-icons/io";
 
 function StaffDashboard() {
   const [userName] = useState("Casey");
@@ -11,12 +13,31 @@ function StaffDashboard() {
   const [contentType, setContentType] = useState("");
   const [contentData, setContentData] = useState({
     title: "",
-    description: ""
+    description: "",
+    link: ""
   });
+  const [contentList, setContentList] = useState({
+    Videos: [],
+    Audios: [],
+    Articles: []
+  });
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  useEffect(() => {
+    const storedContentList = localStorage.getItem('contentList');
+    const storedCategories = localStorage.getItem('categories');
+    if (storedContentList) {
+      setContentList(JSON.parse(storedContentList));
+    }
+    if (storedCategories) {
+      setCategories(JSON.parse(storedCategories));
+    }
+  }, []);
 
   const handleCategorize = async (type) => {
     try {
-      const response = await fetch(`/api/categorize`, {
+      const response = await fetch(`http://localhost:3000/categories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,8 +132,10 @@ function StaffDashboard() {
     setContentType("");
     setContentData({
       title: "",
-      description: ""
+      description: "",
+      link: ""
     });
+    setSelectedCategory("");
   };
 
   const handleCategorySelect = (type) => {
@@ -128,23 +151,50 @@ function StaffDashboard() {
     });
   };
 
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+  };
+
+  const handleAddCategory = () => {
+    const newCategory = prompt("Enter new category name:");
+    if (newCategory && !categories.includes(newCategory)) {
+      const updatedCategories = [...categories, newCategory];
+      localStorage.setItem('categories', JSON.stringify(updatedCategories));
+      setCategories(updatedCategories);
+    }
+  };
+
   const handleCreateContent = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/create-${contentType}`, {
+      const response = await fetch(`http://localhost:3000/content/${selectedCategory}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(contentData)
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error: ${response.status} - ${errorText}`);
+      }
+  
       const data = await response.json();
       console.log(data.message);
-      handleCloseModal(); 
+  
+      const updatedContentList = {
+        ...contentList,
+        [selectedCategory]: [...(contentList[selectedCategory] || []), contentData]
+      };
+      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+      setContentList(updatedContentList);
+      handleCloseModal();
     } catch (error) {
-      console.error("Error creating content:", error);
+      console.error("Error creating content:", error.message);
     }
   };
+  
 
   return (
     <div className="dashboard-container">
@@ -158,11 +208,16 @@ function StaffDashboard() {
           <IoAddCircleOutline />
         </div>
       </div>
-<div className="add-icon-container"><div className="add-icon"><IoAddCircleOutline /></div>
-</div>
+
       <div className="main-content">
         <div className="header">
-          <div className="user-name">{userName}</div>
+          <div className="header-right">
+            <p className="user-name">
+              <CiUser />
+              {userName}
+            </p>
+            <i className="logout-icon"><IoIosLogOut /></i>
+          </div>
         </div>
 
         <div className="content">
@@ -265,6 +320,26 @@ function StaffDashboard() {
             </ul>
           </div>
 
+          <div className="new-content-list">
+            <h2>Newly Created Content</h2>
+            <ul>
+              {Object.keys(contentList).map((category) => (
+                <div className={category.toLowerCase()} key={category}>
+                  <h3>{category}</h3>
+                  <ul>
+                    {contentList[category].map((content, index) => (
+                      <li key={index}>
+                        <h4>{content.title}</h4>
+                        <p>{content.description}</p>
+                        {content.link && <a href={content.link} target="_blank" rel="noopener noreferrer">Link</a>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </ul>
+          </div>
+
           <div className="center-text">
             <h2>Review Content</h2>
           </div>
@@ -291,33 +366,10 @@ function StaffDashboard() {
         </div>
       </div>
 
-      {isModalOpen && !contentType && (
+      {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Select Content Type</h2>
-            <div className="modal-buttons">
-              <button className="modal-btn" onClick={() => handleCategorySelect("Video")}>
-                Video
-              </button>
-              <button className="modal-btn" onClick={() => handleCategorySelect("Audio")}>
-                Audio
-              </button>
-              <button className="modal-btn" onClick={() => handleCategorySelect("Article")}>
-                Article
-              </button>
-              <button className="modal-btn close-btn" onClick={handleCloseModal}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    
-      {contentType && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Create New {contentType}</h2>
+            <h2>Create {contentType}</h2>
             <form onSubmit={handleCreateContent}>
               <label>
                 Title:
@@ -338,6 +390,32 @@ function StaffDashboard() {
                   required
                 />
               </label>
+              <label>
+                Link:
+                <input
+                  type="url"
+                  name="link"
+                  value={contentData.link}
+                  onChange={handleContentChange}
+                  placeholder="http://example.com"
+                />
+              </label>
+              <label>
+                Select Category:
+                <select value={selectedCategory} onChange={handleCategoryChange} required>
+                  <option value="">Select a category</option>
+                  {categories.map((category, index) => (
+                    <option key={index} value={category}>{category}</option>
+                  ))}
+                  <option value='video'>
+                Video
+                </option>
+                <option value='audio'>Audio</option>
+                <option value='article'>Article</option>
+                </select>
+                <button type="button" onClick={handleAddCategory}>Add New Category</button>
+              </label>
+              
               <button type="submit">Submit</button>
               <button type="button" onClick={handleCloseModal}>Close</button>
             </form>
