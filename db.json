@@ -1,0 +1,150 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Admin User",
+      "role": "admin",
+      "email": "admin@example.com",
+      "password": "adminpass",
+      "profile": {
+        "interests": []
+      }
+    },
+    {
+      "id": "2",
+      "name": "Staff User",
+      "role": "staff",
+      "email": "staff@example.com",
+      "password": "staffpass",
+      "profile": {
+        "interests": []
+      }
+    },
+    {
+      "id": "3",
+      "name": "Student User",
+      "role": "student",
+      "email": "student@example.com",
+      "password": "studentpass",
+      "profile": {
+        "interests": [
+          "DevOps",
+          "Fullstack"
+        ],
+        "wishlist": [
+          1,
+          2
+        ],
+        "customInterests": [
+          "AI",
+          "Machine Learning"
+        ]
+      }
+    },
+    {
+      "id": "960d",
+      "type": "Staff",
+      "name": "Yooh"
+    },
+    {
+      "id": "2350149",
+      "type": "Staff",
+      "name": "Puss Puss"
+    },
+    {
+      "id": "2350149"
+    }
+  ],
+  "categories": [
+    {
+      "id": "1",
+      "name": "DevOps",
+      "description": "Content related to DevOps practices and tools."
+    },
+    {
+      "id": "2",
+      "name": "Fullstack",
+      "description": "Content related to Fullstack development."
+    },
+    {
+      "id": "3",
+      "name": "Front-End",
+      "description": "Content related to Front-End development."
+    }
+  ],
+  "content": [
+    {
+      "id": "1",
+      "type": "video",
+      "title": "Introduction to DevOps",
+      "description": "A comprehensive guide to DevOps.",
+      "categoryId": 1,
+      "authorId": 2,
+      "status": "published",
+      "likes": 10,
+      "dislikes": 1,
+      "comments": [
+        {
+          "id": 1,
+          "userId": 3,
+          "content": "Great video! Very informative.",
+          "replies": []
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "type": "article",
+      "title": "Fullstack Development Basics",
+      "description": "An article on the basics of Fullstack development.",
+      "categoryId": 2,
+      "authorId": 3,
+      "status": "draft",
+      "likes": 5,
+      "dislikes": 0,
+      "comments": []
+    },
+    {
+      "id": "cff0",
+      "title": "s<srhsdthd",
+      "description": "fhhdffhseth",
+      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5"
+    }
+  ],
+  "flags": [
+    {
+      "id": "1",
+      "contentId": 1,
+      "userId": 3,
+      "reason": "Inappropriate content"
+    }
+  ],
+  "approvals": [
+    {
+      "id": "1",
+      "contentId": 2,
+      "status": "pending",
+      "adminId": 1
+    }
+  ],
+  "subscriptions": [
+    {
+      "id": "1",
+      "userId": 3,
+      "categoryId": 1
+    },
+    {
+      "id": "2",
+      "userId": 3,
+      "categoryId": 2
+    }
+  ],
+  "notifications": [
+    {
+      "id": "1",
+      "userId": 3,
+      "contentId": 2,
+      "message": "New content posted in your subscribed category: Fullstack"
+    }
+  ]
+}
