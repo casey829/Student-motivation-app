@@ -101,6 +101,7 @@ Explore TeckStudy today and discover your tech potential tomorrow </p>
         </div>
       )}
     </div>
+
   );
 };
 

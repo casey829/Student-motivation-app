@@ -1,10 +1,11 @@
 .container {
-  background-color: rgba(81, 9, 183, 1);
+  background-color:
+  #dbf6fd;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   align-items: center;
-  color: #fff;
+  color: black;
   font-weight: 400;
   justify-content: center;
   padding: 29px 80px;
@@ -41,6 +42,15 @@
   object-position: center;
   width: 100%;
   margin-top: 6px;
+ 
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  
+  
 }
 
 @media (max-width: 991px) {
@@ -83,13 +93,14 @@
 
 .actionButton {
   border-radius: 70px;
-  background-color: rgba(39, 19, 219, 1);
+  background-color: 
+  #0f2f47;
   width: 200px;
   max-width: 100%;
   white-space: nowrap;
   margin: 34px 32px 0 0;
   padding: 12px 70px;
-  color: inherit;
+  color: white;
   text-align: center;
   cursor: pointer;
   border: none;

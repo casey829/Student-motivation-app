@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { CiFlag1 } from "react-icons/ci";
+import React, { useState, useRef } from "react";
+import { CiFlag1 , CiUser} from "react-icons/ci";
 import { FcApprove } from "react-icons/fc";
 import { IoIosArrowDropdown, IoIosLogOut } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
@@ -18,9 +18,15 @@ function AdminDashboard() {
     link: ""
   });
 
-  const handleOpenModal = (type) => {
+  const addUserRef = useRef(null);
+  const deactivateUserRef = useRef(null);
+
+  const handleOpenModal = (type, ref) => {
     setModalType(type);
     setIsModalOpen(true);
+    if (ref.current) {
+      ref.current.focus();
+    }
   };
 
   const handleCloseModal = () => {
@@ -78,7 +84,7 @@ function AdminDashboard() {
   const handleDeactivateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/users', {
+      const response = await fetch('http://localhost:3000/users/deactivate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -131,21 +137,23 @@ function AdminDashboard() {
       <div className="main-content">
         <div className="header">
           <div className="header-right">
-            <p className="user-name">Casey</p>
+            <p className="user-name">
+            <CiUser />
+            Casey</p>
             <i className="logout-icon"><IoIosLogOut /></i>
           </div>
         </div>
 
         <div className="user-management-container">
-          <div className="user-section">
+          <div className="user-section" ref={addUserRef}>
             <h2>Add a User</h2>
-            <button className="user-btn" onClick={() => handleOpenModal('addUser')}>
+            <button className="user-btn" onClick={() => handleOpenModal('addUser', addUserRef)}>
               Add User
             </button>
           </div>
-          <div className="user-section">
+          <div className="user-section" ref={deactivateUserRef}>
             <h2>Deactivate User</h2>
-            <button className="user-btn" onClick={() => handleOpenModal('deactivateUser')}>
+            <button className="user-btn" onClick={() => handleOpenModal('deactivateUser', deactivateUserRef)}>
               Deactivate User
             </button>
           </div>
@@ -225,7 +233,7 @@ function AdminDashboard() {
 
       {isModalOpen && modalType === 'addUser' && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content add-user-modal">
             <h2>Add a User</h2>
             <form onSubmit={handleAddUser}>
               <label>
@@ -263,7 +271,7 @@ function AdminDashboard() {
 
       {isModalOpen && modalType === 'deactivateUser' && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content deactivate-user-modal">
             <h2>Deactivate a User</h2>
             <form onSubmit={handleDeactivateUser}>
               <label>
@@ -284,7 +292,7 @@ function AdminDashboard() {
 
       {isModalOpen && modalType === 'addContent' && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content add-content-modal">
             {!contentType ? (
               <>
                 <h2>Select Content Type</h2>
