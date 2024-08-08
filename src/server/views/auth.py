@@ -1,10 +1,25 @@
-from flask import Blueprint, request, jsonify # type: ignore
+from flask import Flask, Blueprint, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token
+from datetime import datetime, timedelta
 from models import User
-from app import db, bcrypt
-from flask_jwt_extended import create_access_token # type: ignore
-from datetime import datetime
 from schemas import UserSchema
 import re
+
+app = Flask(__name__)
+
+# Configure your database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://moringa_user:Brian_6534@localhost/moringa_platform_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Configure JWT
+app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this to a strong secret key
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)  # Set the token expiration time
+
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+jwt = JWTManager(app)
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -58,3 +73,9 @@ def login():
         access_token = create_access_token(identity=user.id)
         return jsonify(access_token=access_token)
     return jsonify({"error": "Invalid credentials"}), 401
+
+# Register Blueprint
+app.register_blueprint(bp)
+
+if __name__ == '__main__':
+    app.run(debug=True)

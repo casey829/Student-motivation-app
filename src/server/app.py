@@ -7,6 +7,8 @@ from flask_jwt_extended import JWTManager # type: ignore
 from flasgger import Swagger # type: ignore
 from config import Config
 from flask_cors import CORS # type: ignore
+from datetime import timedelta
+
 
 # Initialize extensions
 db = SQLAlchemy()
