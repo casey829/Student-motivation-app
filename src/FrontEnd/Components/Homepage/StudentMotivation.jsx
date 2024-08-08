@@ -1,45 +1,108 @@
-import React, { useState } from "react";
-import styles from '../style.css/StudentMotivation.module.css';
-import ActionButton from './ActionButton';
-import StudentForm from './StudentForm';
-import StaffSignup from "./StaffSignup";
-import AdminLogin from './AdminLogin';
+import React, { useState } from 'react';
+import image from '../image/Premium Vector _ Hand drawn back to school illustration.jpeg';
 
-function StudentMotivation() {
-  const [showStudentForm, setShowStudentForm] = useState(false);
-  const [showStaffSignup, setShowStaffSignup] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+const StudentMotivation = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('');
+  const [userType, setUserType] = useState(''); // State to track selected user type (staff or student)
+  const [formData, setFormData] = useState({
+    userName: '',
+    email: '',
+    password: ''
+  });
+
+  const handleButtonClick = (type) => {
+    setShowModal(true);
+    setModalType(type);
+    setUserType(''); // Reset user type on opening new modal
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleRoleSelect = (type) => {
+    setUserType(type); // Set user type and show form
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert(`Submitting for ${userType}: ${JSON.stringify(formData)}`);
+    // Here you would handle the backend submission
+    handleCloseModal();
+  };
 
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <h1 className={styles.title}>MOTIVATEU</h1>
-        <div className={styles.iframeContainer}>
-          <iframe
-            src="https://assets.pinterest.com/ext/embed.html?id=16255248649137682"
-            height="776"
-            width="450"
-            frameBorder="0"
-            scrolling="no"
-            title="Pinterest Embed"
-            className={styles.iframe}
-          ></iframe>
+    <div className="landing-page">
+      <header className="headers">
+        <div className="logo">TeckStudy</div>
+        <nav className="navigation">
+          <a href="#">Admin</a>
+          <a href="#">About Us</a>
+          <button onClick={() => handleButtonClick('signup')}>SignUp</button>
+          <button onClick={() => handleButtonClick('login')}>LogIn</button>
+        </nav>
+        <div className="menu-icon">&#9776;</div>
+      </header>
+
+      <section className="main-content">
+        <div className="image-container">
+          <img src={image} alt="Coworking Illustration" />
         </div>
-        <section className={styles.actionSection}>
-          <p className={styles.motivationalText}>
-            The secret to your future is hidden in your daily routine
-          </p>
-          <p className={styles.signUpText}>Sign up</p>
-          <ActionButton text="Student" onClick={() => setShowStudentForm(true)} />
-          <ActionButton text="Staff" onClick={() => setShowStaffSignup(true)} />
-          <ActionButton text="login" className={styles.loginButton} onClick={() => setShowAdminLogin(true)} />
-        </section>
-      </div>
-      {showStudentForm && <StudentForm onClose={() => setShowStudentForm(false)} />}
-      {showStaffSignup && <StaffSignup onClose={() => setShowStaffSignup(false)} />}
-      {showAdminLogin && <AdminLogin onClose={() => setShowAdminLogin(false)} />}
-    </main>
+        <div className="text-content">
+          <h1>You Can Do This</h1>
+          <p><strong>About Us:</strong> Welcome to TeckStudy—your portal to the world of technology.</p>
+          
+          <p><strong>About Us:</strong>
+Welcome to TeckStudy—your portal to the world of technology. 
+Our mission at TeckStudy is to provide students with reliable and inspiring resources, connecting them directly to the pulse of the tech industry.
+<br></br>
+<strong>What We Offer:</strong>
+
+Exclusive Interviews: Engage with tech industry leaders, Moringa school alumni, and our expert staff through insightful video and audio interviews.
+Engaging Articles: Stay informed with articles that demystify tech concepts, cover the latest trends, and offer career advice.
+Diverse Multimedia Content: Choose from videos, podcasts, or detailed articles to match your preferred learning style.
+Join Our Community: Enhance your tech knowledge and network with us. Every piece of content is designed to broaden your understanding and connect you with the tech world.
+
+Explore TeckStudy today and discover your tech potential tomorrow </p>
+
+          <h2>The secret to your future is hidden in your daily routine.</h2>
+        </div>
+      </section>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <span className="close-button" onClick={handleCloseModal}>&times;</span>
+            {userType ? (
+              <form onSubmit={handleSubmit}>
+                <h3>Sign Up as {userType}</h3>
+                <input type="text" name="userName" placeholder="User Name" value={formData.userName} onChange={handleChange} required />
+                <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
+                <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+                <button type="submit">Submit</button>
+              </form>
+            ) : (
+              <>
+                <h3>Select Your Role ({modalType})</h3>
+                <button onClick={() => handleRoleSelect('Staff')}>Staff</button>
+                <button onClick={() => handleRoleSelect('Student')}>Student</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+
   );
-}
+};
 
 export default StudentMotivation;
