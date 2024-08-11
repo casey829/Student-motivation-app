@@ -82,3 +82,39 @@ def page_not_found(e):
 @main.errorhandler(500)
 def internal_server_error(e):
     return jsonify({"error": "Internal server error"}), 500
+
+@main.route('/dashboard')
+def dashboard():
+    data = request.args  # Assuming data is passed as query parameters
+    role = data.get('role')
+
+    # Check if the role is valid
+    if role not in ['admin', 'staff', 'student']:
+        return jsonify({"error": "Invalid role. Use 'admin', 'staff', or 'student'."}), 400
+
+    # Fetch necessary data for the dashboard
+    article_count = Article.query.count()
+    latest_articles = Article.query.order_by(Article.date_posted.desc()).limit(5).all()
+
+    # Fetch user data if needed based on role
+    if role == 'admin':
+        user_count = User.query.count()
+        admin_dashboard_data = {
+            "user_count": user_count,
+            "article_count": article_count,
+            "latest_articles": [article.title for article in latest_articles]
+        }
+        return jsonify(admin_dashboard_data), 200
+    elif role == 'staff':
+        staff_dashboard_data = {
+            "article_count": article_count,
+            "latest_articles": [article.title for article in latest_articles]
+        }
+        return jsonify(staff_dashboard_data), 200
+    elif role == 'student':
+        student_dashboard_data = {
+            "latest_articles": [article.title for article in latest_articles]
+        }
+        return jsonify(student_dashboard_data), 200
+
+    return jsonify({"error": "An unexpected error occurred."}), 500

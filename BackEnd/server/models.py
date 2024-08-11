@@ -136,3 +136,40 @@ class Comment(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"<Comment(id={self.id}, content={self.content}, user_id={self.user_id})>"
+
+class Like(db.Model, SerializerMixin):
+    __tablename__ = 'likes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    video_id = db.Column(db.Integer, db.ForeignKey('videos.id', ondelete='CASCADE'), nullable=True)
+    audio_id = db.Column(db.Integer, db.ForeignKey('audios.id', ondelete='CASCADE'), nullable=True)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id', ondelete='CASCADE'), nullable=True)
+    created_at = db.Column(DateTime, server_default=func.current_timestamp())
+    
+    # Relationships
+    user = db.relationship('User', back_populates='likes')
+    video = db.relationship('Video', back_populates='likes', single_parent=True)
+    audio = db.relationship('Audio', back_populates='likes', single_parent=True)
+    article = db.relationship('Article', back_populates='likes', single_parent=True)
+
+    # Serialize rules
+    serialize_rules = ('-user.likes', '-video.likes', '-audio.likes', '-article.likes')
+
+    def __repr__(self):
+        return f"<Like(id={self.id}, user_id={self.user_id})>"
+class Subscription(db.Model, SerializerMixin):
+    __tablename__ = 'subscriptions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='CASCADE'), nullable=False)
+    created_at = db.Column(DateTime, server_default=func.current_timestamp())
+    
+    # Relationships
+    user = db.relationship('User', back_populates='subscriptions')
+    category = db.relationship('Category', back_populates='subscriptions')
+
+    # Serialize rules
+    serialize_rules = ('-user.subscriptions', '-category.subscriptions')
+
+    def __repr__(self):
+        return f"<Subscription(id={self.id}, user_id={self.user_id}, category_id={self.category_id})>"
