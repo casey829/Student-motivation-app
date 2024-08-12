@@ -19,6 +19,7 @@ app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"
 
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
+api = Api(app)
 
 from models import User, Role, Video, Audio, Article, Comment,db
 migrate = Migrate(app, db)
@@ -53,17 +54,18 @@ class UserSignUp(Resource):
         password = data.get('password')
 
         if user_type == 'student':
-            new_user = User(username=username, email=email, password_hash=bcrypt.generate_password_hash(password).decode('utf-8'))
+            new_user = User(username=username, email=email, password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),role = user_type)
             db.session.add(new_user)
             db.session.commit()
             return jsonify({'success': 'Student has been created successfully'}), 201
         elif user_type == 'staff':
-            new_user = User(username=username, email=email, password_hash=bcrypt.generate_password_hash(password).decode('utf-8'))
+            new_user = User(username=username, email=email, password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),role = user_type)
             db.session.add(new_user)
             db.session.commit()
             return jsonify({'success': 'Staff has been created successfully'}), 201
         else:
             return jsonify({'error': 'Invalid user type'}), 400
+
 # Define the Login resource (POST /auth/login)
 class UserLogin(Resource):
     def post(self):
@@ -88,11 +90,35 @@ class AdminDashboard(Resource):
     def get(self):
         return jsonify({"message": "Admin Dashboard"}), 200
 
+
+class StaffDashboard(Resource):
+    def get(self):
+        return jsonify({"message": "Staff Dashboard"}), 200
+    
+class StudentDashboard(Resource):
+    def get(self):
+        return jsonify({"message": "Student Dashboard"}), 200
+    
+class UserProfile(Resource):
+    def get(self):
+        user = load_user()
+        if user:
+            return jsonify(user.to_dict()), 200
+        else:
+            return jsonify({"message": "User not found"}), 404
+        
+class Logout(Resource):
+    def get(self):
+        return jsonify({"message": "Logout successful"}), 200
 # Adding the resources to the API
 api.add_resource(UserSignUp, '/users')           # POST /users
 api.add_resource(UserLogin, '/auth/login')       # POST /auth/login
 api.add_resource(About, '/about')                # GET /about
 api.add_resource(AdminDashboard, '/admin/dashboard')  # GET /admin/dashboard
+api.add_resource(StaffDashboard, '/staff/dashboard')  # GET /staff/dashboard
+api.add_resource(StudentDashboard, '/student/dashboard')  # GET /student/dashboard
+api.add_resource(UserProfile, '/profile')  # GET /profile
+api.add_resource(Logout, '/logout')  # GET /logout
 
 
 if __name__ == '__main__':

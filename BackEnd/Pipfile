@@ -15,6 +15,7 @@ flask-jwt-extended = "*"
 flask-babel = "*"
 psycopg2-binary = "*"
 flask-restful = "*"
+flask-babelex = "*"
 
 [dev-packages]
 
