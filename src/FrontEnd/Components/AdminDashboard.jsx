@@ -140,7 +140,7 @@ function AdminDashboard() {
           <span className="sidebar-text">Deactivate User</span>
         </div>
         <div className="add-icon-container" onClick={() => handleOpenModal('addContent')}>
-          <IoAddCircleOutline className="add-icon" /><span>Add Content</span>
+          <IoAddCircleOutline className="add-icon" /><span className="sidebar-text">Add Content</span>
         </div>
         <div className="profile-section">
           {isLoggedIn ? (
