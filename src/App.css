@@ -136,7 +136,7 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  width:64px; /* Reduced size */
+  width:64px; 
   height: 100%;
   background-color: #0f2f47;
   color: #fff;
@@ -203,8 +203,81 @@ body {
   flex-grow: 1;
   padding: 50px;
   background-color: #ecf0f1;
+  overflow-y: auto;
+  margin-left: 180px;
 }
 
+.main-content .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.main-content h2 {
+  font-size: 24px;
+  color: #333;
+  border-bottom: 2px solid #ffc107;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.main-content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.main-content li {
+  background-color: #fff;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-content li h4 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.main-content li p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.main-content li a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.main-content li a:hover {
+  color: #0056b3;
+}
+
+.main-content li button {
+  background-color: #f4f4f4;
+  border: 1px solid #ccc;
+  color: #333;
+  font-size: 14px;
+  padding: 8px 12px;
+  margin-right: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.main-content li button:hover {
+  background-color: #e0e0e0;
+}
+
+.main-content li button svg {
+  margin-right: 5px;
+  vertical-align: middle;
+}
 /* Header */
 .header {
   display: flex;
@@ -322,11 +395,10 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
 }
 
 .modal-content {
@@ -334,7 +406,12 @@ body {
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  width: 400px;
+  width: 300px;
+}
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; 
 }
 
 .modal-content h2 {
@@ -352,10 +429,10 @@ body {
 .modal-content form input,
 .modal-content form select,
 .modal-content form textarea {
-  width: 100%;
+  width: 96%;
   padding: 12px;
   margin-bottom: 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   border: 1px solid #bdc3c7;
   font-size: 16px;
 }
@@ -371,6 +448,7 @@ body {
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
+
 
 .modal-content form button[type="button"] {
   background-color: #e74c3c;
@@ -421,6 +499,9 @@ body {
     display: flex;
     flex-direction: column;
   }
+
+
+
   
   .modal-content form input {
     margin-bottom: 10px;

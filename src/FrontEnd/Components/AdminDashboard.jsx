@@ -18,7 +18,7 @@ function AdminDashboard() {
     title: "",
     description: "",
     link: "",
-    thumbnail: "" // Added field for thumbnail
+    thumbnail: "" 
   });
   const [contentList, setContentList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(""); // Added state for category
