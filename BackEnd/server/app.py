@@ -4,7 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from flask_cors import CORS
 from flask_restful import Api, Resource
-from models import User, db
+from models import User, Category, Article, Video, Audio, Comment, db
 
 app = Flask(__name__)
 CORS(app)
@@ -87,7 +87,7 @@ class StudentDashboard(Resource):
 
 # Define the User Profile resource (GET /profile)
 class UserProfile(Resource):
-    
+
     @jwt_required()
     def get(self):
         user = load_user()
@@ -100,6 +100,48 @@ class UserProfile(Resource):
 class Logout(Resource):
     def get(self):
         return jsonify({"message": "Logout successful"}), 200
+    
+
+class CreateCategory(Resource):
+    @jwt_required()
+    def post(self):
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        if not user or not user.is_staff:
+            return jsonify({"message": "Unauthorized"}), 401
+
+        data = request.get_json()
+        name = data.get('name')
+        description = data.get('description')
+
+        if Category.query.filter_by(name=name).first():
+            return jsonify({"message": "Category already exists"}), 400
+        
+        new_category = Category(name=name, description=description)
+        db.session.add(new_category)
+        db.session.commit()
+        return jsonify({"message": "Category created successfully"}), 201
+    
+# Define the Subscribe Category resource (POST /subscribe)
+class SubscribeCategory(Resource):
+    @jwt_required()
+    def post(self):
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        category_name = data.get('category_name')
+
+        category = Category.query.filter_by(name=category_name).first()
+        if not category:
+            return jsonify({"message": "Category not found"}), 404
+        
+        user = User.query.get(user_id)
+        if category in user.subscriptions:
+            return jsonify({"message": "Category already subscribed"}), 400
+
+        user.subscriptions.append(category)
+        db.session.commit()
+        return jsonify({"message": "Category subscribed successfully"}), 200
 
 # Adding the resources to the API
 api.add_resource(HomePage, '/homepage')          # GET /homepage
@@ -111,6 +153,8 @@ api.add_resource(StaffDashboard, '/staff/dashboard')  # GET /staff/dashboard
 api.add_resource(StudentDashboard, '/student/dashboard')  # GET /student/dashboard
 api.add_resource(UserProfile, '/profile')  # GET /profile
 api.add_resource(Logout, '/logout')  # GET /logout
+api.add_resource(CreateCategory, '/create/category')  # POST /create/category
+api.add_resource(SubscribeCategory, '/subscribe/category')  # POST /subscribe/category
 
 if __name__ == '__main__':
     app.run(debug=True)
