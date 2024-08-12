@@ -2,208 +2,489 @@
   "users": [
     {
       "id": "1",
-      "name": "Admin User",
-      "role": "admin",
-      "UserId": "assdaa4456",
-      "password": "adminpass",
-      "profile": {
-        "interests": []
-      }
+      "username": "adminUser",
+      "password": "adminPass",
+      "role": "admin"
     },
     {
       "id": "2",
-      "name": "Staff User",
-      "role": "staff",
-      "UserId": "511UYF5RRD5R",
-      "password": "staffpass",
-      "profile": {
-        "interests": []
-      }
+      "username": "staffUser",
+      "password": "staffPass",
+      "role": "staff"
     },
     {
       "id": "3",
-      "name": "Student User",
-      "role": "student",
-      "email": "student@example.com",
-      "password": "studentpass",
-      "profile": {
-        "interests": [
-          "DevOps",
-          "Fullstack"
-        ],
-        "wishlist": [
-          1,
-          2
-        ],
-        "customInterests": [
-          "AI",
-          "Machine Learning"
-        ]
-      }
-    },
-    {
-      "id": "960d",
-      "type": "Staff",
-      "name": "Yooh"
-    },
-    {
-      "id": "2350149",
-      "type": "Staff",
-      "name": "Puss Puss"
-    },
-    {
-      "id": "2350149"
-    },
-    {
-      "id": "b146",
-      "name": "ffsfvv",
-      "UserId": "ddvar"
-    },
-    {
-      "id": "8b43",
-      "name": "Barbie",
-      "UserId": "ddvar"
-    },
-    {
-      "id": "cd9a",
-      "name": "Dinasour",
-      "UserId": "ddvar"
-    },
-    {
-      "id": "2544",
-      "name": "ssassc",
-      "UserId": "sscvcwqevw5869d"
-    },
-    {
-      "id": "53c0",
-      "name": "Marion ",
-      "UserId": "2350515256"
-    },
-    {
-      "id": "5fb2",
-      "name": "Barbie",
-      "UserId": "2350515256"
-    },
-    {
-      "id": "aad4",
-      "name": "Barbie",
-      "UserId": "2350515256"
-    },
-    {
-      "id": "c835",
-      "name": "Barbie",
-      "UserId": "2350515256"
-    },
-    {
-      "id": "7268",
-      "name": "Barbie",
-      "UserId": "2350515256"
+      "username": "studentUser",
+      "password": "studentPass",
+      "role": "student"
     }
   ],
   "categories": [
     {
       "id": "1",
-      "name": "DevOps",
-      "description": "Content related to DevOps practices and tools."
+      "name": "DevOps"
     },
     {
       "id": "2",
-      "name": "Fullstack",
-      "description": "Content related to Fullstack development."
+      "name": "Fullstack"
     },
     {
       "id": "3",
-      "name": "Front-End",
-      "description": "Content related to Front-End development."
+      "name": "Front-End"
+    },
+    {
+      "id": "c07f",
+      "name": "y455"
+    },
+    {
+      "id": "673a",
+      "name": "jrykdttlful"
+    },
+    {
+      "id": "24be",
+      "name": "wegw35jtrtd"
+    },
+    {
+      "id": "91a4",
+      "name": "rttut5y"
+    },
+    {
+      "id": "7de4",
+      "name": "rhedturfyjtggy"
+    },
+    {
+      "id": "ff17",
+      "name": "dfdsrgs"
+    },
+    {
+      "id": "fe12",
+      "name": "ssdgedrhgn"
+    },
+    {
+      "id": "a6ac",
+      "name": "tjk5tuo7"
     }
   ],
   "content": [
     {
       "id": "1",
-      "type": "video",
       "title": "Introduction to DevOps",
-      "description": "A comprehensive guide to DevOps.",
+      "type": "article",
       "categoryId": 1,
       "authorId": 2,
-      "status": "published",
-      "likes": 10,
-      "dislikes": 1,
+      "status": "approved",
+      "content": "Content of the article.",
       "comments": [
         {
           "id": 1,
-          "userId": 3,
-          "content": "Great video! Very informative.",
-          "replies": []
+          "authorId": 3,
+          "content": "Great article!",
+          "replies": [
+            {
+              "id": 2,
+              "authorId": 2,
+              "content": "Thanks for your feedback!"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "",
-      "title": "rhxxhjjdryjrdfhdrtrfh",
-      "description": "tjses5tjfgg",
-      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5"
+      "id": "2",
+      "title": "Advanced React Tips",
+      "type": "video",
+      "categoryId": 2,
+      "authorId": 3,
+      "status": "pending",
+      "content": "URL to the video.",
+      "comments": []
     },
     {
-      "id": "2c3e",
-      "title": "sdvs",
-      "description": "aasvasvaddv",
+      "id": "811a",
+      "content": "ryw45uehst"
+    },
+    {
+      "id": "63fa",
+      "content": "q3t3erttjfc"
+    },
+    {
+      "id": "e9a1",
+      "content": "Marion"
+    },
+    {
+      "id": "0679",
+      "title": "gearhes",
+      "description": "asrrhgae3h",
       "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
-      "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg",
-      "category": "Front-End"
+      "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg"
     },
     {
-      "id": "",
-      "title": "w4y3",
-      "description": "rrgw35h",
-      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5"
+      "id": "8734",
+      "title": "Yooh",
+      "description": "qefaw4yg3zdf",
+      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+      "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg"
     },
     {
-      "id": "",
-      "title": "rg34g34g",
-      "description": "ggweb3erg3",
-      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5"
+      "id": "8414",
+      "title": "Figma",
+      "description": "Learning Figma as a beginner.",
+      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+      "thumbnail": "https://images.app.goo.gl/awd6X5okeu1rpTZ49"
     },
     {
-      "id": "",
-      "title": "articke add",
-      "description": "eqe`113f3",
-      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5"
+      "id": "77b7",
+      "title": "Learning React",
+      "description": "Learning React ",
+      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+      "thumbnail": "https://images.app.goo.gl/7RMUzTKMfRd1tugw9"
+    },
+    {
+      "id": "ccad",
+      "title": "e44t3e4y",
+      "description": "eu4e5eutryjj",
+      "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+      "thumbnail": "https://images.app.goo.gl/7RMUzTKMfRd1tugw9"
+    }
+  ],
+  "wishlists": [
+    {
+      "id": "7749",
+      "item": 1
+    },
+    {
+      "id": "1f3c",
+      "item": {
+        "id": "63fa",
+        "content": "q3t3erttjfc"
+      }
+    },
+    {
+      "id": "5d85",
+      "item": {
+        "id": "1",
+        "title": "Introduction to DevOps",
+        "type": "article",
+        "categoryId": 1,
+        "authorId": 2,
+        "status": "approved",
+        "content": "Content of the article.",
+        "comments": [
+          {
+            "id": 1,
+            "authorId": 3,
+            "content": "Great article!",
+            "replies": [
+              {
+                "id": 2,
+                "authorId": 2,
+                "content": "Thanks for your feedback!"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "f167",
+      "item": {
+        "id": "91ef",
+        "content": "fgsrtt6"
+      }
+    },
+    {
+      "id": "686f",
+      "item": {
+        "id": "63fa",
+        "content": "q3t3erttjfc"
+      }
+    },
+    {
+      "id": "b118",
+      "item": {
+        "id": "63fa",
+        "content": "q3t3erttjfc"
+      }
+    },
+    {
+      "id": "d159",
+      "item": {
+        "content": "Marion",
+        "id": 5
+      }
+    },
+    {
+      "id": "4a8b",
+      "item": {
+        "id": "e9a1",
+        "content": "Marion"
+      }
+    },
+    {
+      "id": "aee4",
+      "item": {
+        "id": "e9a1",
+        "content": "Marion"
+      }
+    },
+    {
+      "id": "cb20",
+      "item": {
+        "id": "0679",
+        "title": "gearhes",
+        "description": "asrrhgae3h",
+        "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+        "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg"
+      }
+    },
+    {
+      "id": "dc47",
+      "item": {
+        "id": "0679",
+        "title": "gearhes",
+        "description": "asrrhgae3h",
+        "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+        "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg"
+      }
+    },
+    {
+      "id": "20af",
+      "item": {
+        "id": "0679",
+        "title": "gearhes",
+        "description": "asrrhgae3h",
+        "link": "https://youtu.be/ezldKx-jPag?si=eoT3vKmEeVSzKtV5",
+        "thumbnail": "https://img.youtube.com/vi/{VIDEO_ID}/hqdefault.jpg"
+      }
+    },
+    {
+      "id": "026a",
+      "contentId": "e9a1"
+    },
+    {
+      "id": "05bb",
+      "contentId": "0679"
+    },
+    {
+      "id": "a0ba",
+      "contentId": "0679"
+    },
+    {
+      "id": "4b98",
+      "contentId": "0679"
+    },
+    {
+      "id": "501a",
+      "contentId": "0679"
+    },
+    {
+      "id": "240e",
+      "contentId": "0679"
+    },
+    {
+      "id": "e58f",
+      "contentId": "0679"
+    },
+    {
+      "id": "cd42",
+      "contentId": "2"
+    },
+    {
+      "id": "38b9",
+      "contentId": "811a"
+    },
+    {
+      "id": "956e",
+      "contentId": "0679"
+    },
+    {
+      "id": "05cd",
+      "contentId": "0679"
+    },
+    {
+      "id": "dd72",
+      "contentId": "0679"
+    },
+    {
+      "id": "d09b",
+      "contentId": "0679"
+    },
+    {
+      "id": "abed",
+      "contentId": "0679"
+    },
+    {
+      "id": "58a5",
+      "contentId": "0679"
+    },
+    {
+      "id": "6f33",
+      "contentId": "0679"
+    },
+    {
+      "id": "4166",
+      "contentId": "0679"
+    },
+    {
+      "id": "2913",
+      "contentId": "0679"
+    },
+    {
+      "id": "d545",
+      "contentId": "0679"
+    },
+    {
+      "id": "c38e",
+      "contentId": "0679"
+    },
+    {
+      "id": "f40e",
+      "contentId": "1"
+    },
+    {
+      "id": "dcc3",
+      "contentId": "63fa"
+    },
+    {
+      "id": "dc67",
+      "contentId": "8734"
+    },
+    {
+      "id": "96e8",
+      "contentId": "8734"
+    },
+    {
+      "id": "a195",
+      "contentId": "8734"
+    },
+    {
+      "id": "7032",
+      "contentId": "8734"
+    },
+    {
+      "id": "0bba",
+      "contentId": "8734"
+    },
+    {
+      "id": "f454",
+      "contentId": "8734"
+    },
+    {
+      "id": "0e90",
+      "contentId": "8734"
+    },
+    {
+      "id": "0a27",
+      "contentId": "8734"
+    },
+    {
+      "id": "2c47",
+      "contentId": "8734"
+    },
+    {
+      "id": "6f1c",
+      "contentId": "8734"
+    },
+    {
+      "id": "c5b7",
+      "contentId": "8734"
+    },
+    {
+      "id": "a76c",
+      "contentId": "8734"
+    },
+    {
+      "id": "b7ef",
+      "contentId": "8414"
+    },
+    {
+      "id": "7f4f",
+      "contentId": "8414"
+    },
+    {
+      "id": "e468",
+      "contentId": "8414"
+    },
+    {
+      "id": "959b",
+      "contentId": "8414"
+    },
+    {
+      "id": "2742",
+      "contentId": "8414"
+    },
+    {
+      "id": "f3e7",
+      "contentId": "8414"
+    },
+    {
+      "id": "6311",
+      "contentId": "8414"
+    },
+    {
+      "id": "cd3c",
+      "contentId": "8414"
+    },
+    {
+      "id": "10a5",
+      "contentId": "8414"
+    },
+    {
+      "id": "153b",
+      "contentId": "8414"
+    },
+    {
+      "id": "d6c6",
+      "contentId": "8414"
+    },
+    {
+      "id": "637b",
+      "contentId": "77b7"
+    },
+    {
+      "id": "acab",
+      "contentId": "ccad"
+    }
+  ],
+  "profiles": [
+    {
+      "userId": 1,
+      "name": "Admin User",
+      "email": "admin@example.com",
+      "interests": [],
+      "id": "3e93"
+    },
+    {
+      "userId": 2,
+      "name": "Staff User",
+      "email": "staff@example.com",
+      "interests": [],
+      "id": "1727"
+    },
+    {
+      "userId": 3,
+      "name": "Student User",
+      "email": "student@example.com",
+      "interests": [
+        "DevOps",
+        "Front-End"
+      ],
+      "id": "72ca"
     }
   ],
   "flags": [
     {
       "id": "1",
       "contentId": 1,
-      "userId": 3,
-      "reason": "Inappropriate content"
+      "reason": "Inappropriate content",
+      "flaggedBy": 2
     }
   ],
   "approvals": [
     {
       "id": "1",
       "contentId": 2,
-      "status": "pending",
-      "adminId": 1
-    }
-  ],
-  "subscriptions": [
-    {
-      "id": "1",
-      "userId": 3,
-      "categoryId": 1
-    },
-    {
-      "id": "2",
-      "userId": 3,
-      "categoryId": 2
-    }
-  ],
-  "notifications": [
-    {
-      "id": "1",
-      "userId": 3,
-      "contentId": 2,
-      "message": "New content posted in your subscribed category: Fullstack"
+      "approvedBy": 1
     }
   ]
 }

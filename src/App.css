@@ -138,9 +138,10 @@ body {
   left: 0;
   width:64px; 
   height: 100%;
-  background-color: #0f2f47;
+  background-color:  #0f2f47;
   color: #fff;
   transition: width 0.4s ease;
+  border-right: 2px solid #e0e0e0;
   overflow: hidden;
   flex-direction: column;
   display: flex;
@@ -401,6 +402,17 @@ body {
   align-items: center;
 }
 
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
 .modal-content {
   background-color: #fff;
   padding: 40px;
@@ -527,4 +539,112 @@ body {
     background-color: white;
   }
   /*button */
+  /*Student*/
+  .wishlist-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    color: #000;
+    font-size: 16px;
+  }
   
+  .wishlist-button.in-wishlist {
+    color: red; /* Change this color to your preferred red shade */
+  }
+  .sidebars {
+    width: 250px;
+    background-color: #f0f8ff;
+    padding: 20px;
+    border-right: 2px solid #e0e0e0;
+    position: relative;
+  }
+
+.logos{
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.sidebar-items{
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-items:hover {
+  background-color: #e0f7fa;
+}
+.posts-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.post-card {
+  width: 100%;
+  max-width: 300px;
+  background: #f9fbe7;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+  gap:8px
+}
+
+.post-card:hover {
+  transform: scale(1.02);
+}
+
+.post-title {
+  font-size: 20px;
+  color: #333;
+}
+
+.post-description {
+  font-size: 16px;
+  color: #666;
+}
+
+.post-thumbnail {
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.wishlist-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: #f44336;
+  transition: color 0.3s ease;
+}
+.comments-section {
+  margin-top: 10px;
+}
+
+.comment-input {
+  width: calc(100% - 100px);
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-right: 10px;
+}
+
+.comment-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.comment-button:hover {
+  background-color: #45a049;
+}

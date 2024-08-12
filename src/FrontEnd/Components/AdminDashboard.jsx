@@ -65,7 +65,7 @@ function AdminDashboard() {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/users', {
+      const response = await fetch('http://localhost:5000/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ function AdminDashboard() {
   const handleDeactivateUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/users/deactivate', {
+      const response = await fetch('http://localhost:5000/users/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

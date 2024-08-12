@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
 import image from '../image/Premium Vector _ Hand drawn back to school illustration.jpeg';
 import AdminDashboard from '../AdminDashboard';
 
@@ -13,9 +13,13 @@ const StudentMotivation = () => {
     password: ''
   });
 
+  const navigate = useNavigate(); // Use useNavigate hook to programmatically navigate
+
   const handleButtonClick = (type) => {
     if (type === 'admin') {
-      window.location.href = '/admin-dashboard';
+      setShowModal(true);
+      setModalType('login');
+      setUserType('Admin');
     } else {
       setShowModal(true);
       setModalType(type);
@@ -39,11 +43,56 @@ const StudentMotivation = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Submitting for ${modalType} as ${userType}: ${JSON.stringify(formData)}`);
-    // Handle backend submission here
-    handleCloseModal();
+    
+    let url = '';
+    let bodyData = {};
+
+    if (modalType === 'signup') {
+      url = ' http://127.0.0.1:5000/users'; // Replace with your Flask signup endpoint
+      bodyData = {
+        username: formData.userName,
+        email: formData.email,
+        password: formData.password,
+        role: userType.toLowerCase()
+      };
+    } else if (modalType === 'login' && userType === 'Admin') {
+      url = ' http://127.0.0.1:5000/auth/login'; // Replace with your Flask login endpoint
+      bodyData = {
+        email: formData.email,
+        password: formData.password
+      };
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
+      });
+
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`${modalType === 'signup' ? 'Sign Up' : 'Login'} successful!`);
+        if (modalType === 'login' && userType === 'Admin') {
+          navigate('/admin-dashboard'); // Redirect to the AdminDashboard
+        } else {
+          // Handle other role navigations here
+        }
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again later.');
+    } finally {
+      handleCloseModal();
+    }
   };
 
   return (
@@ -91,10 +140,10 @@ const StudentMotivation = () => {
               <form onSubmit={handleSubmit}>
                 <h3>Admin Login</h3>
                 <input
-                  type="text"
-                  name="userName"
-                  placeholder="Username"
-                  value={formData.userName}
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={formData.email}
                   onChange={handleChange}
                   required
                 />

@@ -58,7 +58,7 @@ function StaffDashboard() {
   const handleCreateProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await handleRequest("http://localhost:3000/users", 'POST', profileData);
+      const response = await handleRequest("http://localhost:5000/users", 'POST', profileData);
       if (response.success) {
         alert("Profile created successfully!");
 
