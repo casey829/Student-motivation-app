@@ -1,8 +1,10 @@
 from sqlalchemy_serializer import SerializerMixin
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy import DateTime, func
-from server.extensions import db
 
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 # UserRoles Model
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
@@ -136,3 +138,6 @@ class Comment(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"<Comment(id={self.id}, content={self.content}, user_id={self.user_id})>"
+
+
+#Likes Model
