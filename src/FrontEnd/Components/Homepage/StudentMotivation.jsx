@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import image from '../image/Premium Vector _ Hand drawn back to school illustration.jpeg';
+import AdminDashboard from '../AdminDashboard';
 
 const StudentMotivation = () => {
   const [showModal, setShowModal] = useState(false);
@@ -13,9 +15,13 @@ const StudentMotivation = () => {
   });
 
   const handleButtonClick = (type) => {
-    setShowModal(true);
-    setModalType(type);
-    setUserType('');
+    if (type === 'admin') {
+      window.location.href = '/admin-dashboard';
+    } else {
+      setShowModal(true);
+      setModalType(type);
+      setUserType('');
+    }
   };
 
   const handleCloseModal = () => {
@@ -54,7 +60,7 @@ const StudentMotivation = () => {
         <div className="menu-icon">&#9776;</div>
       </header>
 
-      <section className="main-content">
+      <section className="main-contents">
         <div className="image-container">
           <img src={image} alt="Coworking Illustration" />
         </div>
@@ -146,5 +152,13 @@ const StudentMotivation = () => {
   );
 };
 
-export default StudentMotivation;
+const App = () => (
+  <Router>
+    <Routes>
+      <Route path="/" element={<StudentMotivation />} />
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+    </Routes>
+  </Router>
+);
 
+export default App;
