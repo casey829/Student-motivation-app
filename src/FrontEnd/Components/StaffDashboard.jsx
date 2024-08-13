@@ -1,3 +1,12 @@
+import React, { useState, useEffect } from 'react';
+import { MdOutlineSpaceDashboard } from 'react-icons/md';
+import { TiUserAdd } from 'react-icons/ti';
+import { RiFileMusicLine, RiArticleLine, RiVideoLine } from 'react-icons/ri';
+import { IoIosLogOut } from 'react-icons/io';
+import { BiEdit } from 'react-icons/bi';
+import { CiFlag1 } from 'react-icons/ci';
+import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from 'react-icons/ai';
+
 function StaffDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); 
@@ -47,6 +56,7 @@ function StaffDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : null
       });
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.error(`Error with ${method} request:`, error);
@@ -58,7 +68,7 @@ function StaffDashboard() {
   const handleCreateProfile = async (e) => {
     e.preventDefault();
     try {
-      const response = await handleRequest("http://localhost:5000/users", 'POST', profileData);
+      const response = await handleRequest("http://localhost:3000/users", 'POST', profileData);
       if (response.success) {
         alert("Profile created successfully!");
 
@@ -87,13 +97,17 @@ function StaffDashboard() {
     e.preventDefault();
     try {
       const response = await handleRequest(`http://localhost:3000/content/${selectedCategory}`, 'POST', contentData);
-      const updatedContentList = { 
-        ...contentList, 
-        [selectedCategory]: [...(contentList[selectedCategory] || []), contentData] 
-      };
-      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
-      setContentList(updatedContentList);
-      handleCloseModal();
+      if (response.success) {
+        const updatedContentList = { 
+          ...contentList, 
+          [selectedCategory]: [...(contentList[selectedCategory] || []), contentData] 
+        };
+        localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+        setContentList(updatedContentList);
+        handleCloseModal();
+      } else {
+        alert(`Error: ${response.message}`);
+      }
     } catch (error) {
       console.error("Error creating content:", error.message);
     }
@@ -104,7 +118,7 @@ function StaffDashboard() {
     e.preventDefault();
     try {
       const response = await handleRequest(`http://localhost:3000/content/${contentData.id}`, 'PUT', contentData);
-      if (!response.ok) throw new Error(`Error: ${response.status} - ${response.message}`);
+      if (!response.success) throw new Error(`Error: ${response.message}`);
 
       const updatedContentList = {
         ...contentList,
@@ -218,16 +232,49 @@ function StaffDashboard() {
                   <button onClick={() => handleOpenModal('editContent', content)}>
                     <BiEdit /> Edit
                   </button>
-                  <button onClick={() => handleRequest(`http://localhost:3000/content/${content.id}`, 'DELETE')}>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/${content.id}`, 'DELETE');
+                      const updatedContentList = {
+                        ...contentList,
+                        [category]: contentList[category].filter(item => item.id !== content.id)
+                      };
+                      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+                      setContentList(updatedContentList);
+                    } catch (error) {
+                      console.error("Error deleting content:", error.message);
+                    }
+                  }}>
                     <CiFlag1 /> Delete
                   </button>
-                  <button onClick={() => handleRequest(`http://localhost:3000/content/like/${content.id}`, 'POST')}>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/like/${content.id}`, 'POST');
+                    } catch (error) {
+                      console.error("Error liking content:", error.message);
+                    }
+                  }}>
                     <AiOutlineLike /> Like
                   </button>
-                  <button onClick={() => handleRequest(`http://localhost:3000/content/dislike/${content.id}`, 'POST')}>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/dislike/${content.id}`, 'POST');
+                    } catch (error) {
+                      console.error("Error disliking content:", error.message);
+                    }
+                  }}>
                     <AiOutlineDislike /> Dislike
                   </button>
-                  <button onClick={() => handleRequest(`http://localhost:3000/content/comment/${content.id}`, 'POST', prompt("Enter comment:"))}>
+                  <button onClick={async () => {
+                    const comment = prompt("Enter comment:");
+                    if (comment) {
+                      try {
+                        await handleRequest(`http://localhost:3000/content/comment/${content.id}`, 'POST', { comment });
+                      } catch (error) {
+                        console.error("Error commenting on content:", error.message);
+                      }
+                    }
+                  }}>
                     <AiOutlineComment /> Comment
                   </button>
                 </li>
