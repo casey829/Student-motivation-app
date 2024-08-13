@@ -41,9 +41,10 @@ class User(db.Model, UserMixin, SerializerMixin):
     articles = db.relationship('Article', back_populates='user', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='user', lazy=True, cascade='all, delete-orphan')
     categories = db.relationship('Category', secondary=user_categories, back_populates='subscribers')
+    content_actions = db.relationship('UserContentAction', back_populates='user', lazy=True, cascade='all, delete-orphan')
     
     # Serialize rules
-    serialize_rules = ('-roles.users',)
+    serialize_rules = ('-roles.users','-videos.user', '-audios.user', '-articles.user', '-comments.user', '-categories.subscribers', '-content_actions.user')
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email}, role_ids={[r.id for r in self.roles]})>"
@@ -187,3 +188,17 @@ class BlacklistedToken(db.Model):
     
     def __repr__(self):
         return f"<BlacklistedToken(token={self.token})>"
+class UserContentAction(db.Model):
+    __tablename__ = 'user_content_actions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content_id = db.Column(db.Integer, nullable=False)
+    content_type = db.Column(db.String(50), nullable=False)  # 'video', 'audio', 'article'
+    action = db.Column(db.String(10), nullable=False)  # 'like', 'dislike', 'no_engagement'
+
+    user = db.relationship('User', back_populates='content_actions')
+    
+   
+    def __repr__(self):
+        return f"<UserContentAction(user_id={self.user_id}, content_id={self.content_id}, content_type={self.content_type}, action={self.action})>"

@@ -6,7 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 from flask_cors import CORS
 from flask_restful import Api, Resource
-from models import User, Category, Article, Video, Audio, Comment, BlacklistedToken,db
+from models import db, User, Category, Article, Video, Audio, Comment, BlacklistedToken, UserContentAction
 import traceback
 import base64
 
@@ -32,6 +32,7 @@ db.init_app(app)
 @app.route('/homepage', methods=['GET']) #works fine
 def home_page():
     return jsonify({"message": "Welcome to TechStudy"}), 200
+
 
 # User Sign Up
 @app.route('/users', methods=['POST']) #works fine
@@ -159,7 +160,7 @@ def logout():
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 # Create Category
-@app.route('/create/category', methods=['POST'])
+@app.route('/create/category', methods=['POST']) #works fine
 @jwt_required()
 def create_category():
     user_id = get_jwt_identity()
@@ -181,25 +182,31 @@ def create_category():
     return jsonify({"message": "Category created successfully"}), 201
 
 # Subscribe Category
-@app.route('/subscribe/category', methods=['POST'])
+@app.route('/subscribe/category', methods=['POST']) #works fine
 @jwt_required()
 def subscribe_category():
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    if user.role != 'student':
+        return jsonify({"message": "Only students can subscribe to categories"}), 403
+
     data = request.get_json()
     category_name = data.get('category_name')
-
+    
     category = Category.query.filter_by(name=category_name).first()
     if not category:
         return jsonify({"message": "Category not found"}), 404
     
-    user = User.query.get(user_id)
-    if category in user.subscriptions:
+    if category in user.categories:
         return jsonify({"message": "Category already subscribed"}), 400
 
-    user.subscriptions.append(category)
+    user.categories.append(category)
     db.session.commit()
     return jsonify({"message": "Category subscribed successfully"}), 200
-
 # Upload Content
 
 @app.route('/upload/<string:content_type>', methods=['POST'])
@@ -208,9 +215,9 @@ def upload_content(content_type):
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
-    if user is None or user.role not in ['staff', 'student']:
+    if user is None :
         return jsonify({"message": "Unauthorized"}), 401
-
+    
     if content_type not in ['video', 'audio', 'article']:
         return jsonify({"error": "Invalid content type"}), 400
 
@@ -363,6 +370,7 @@ def like_content(content_type, content_id):
         return jsonify({"error": "Invalid content type"}), 400
 
     try:
+        # Retrieve the content based on the content type
         if content_type == 'video':
             content = Video.query.get(content_id)
         elif content_type == 'audio':
@@ -373,11 +381,32 @@ def like_content(content_type, content_id):
         if not content:
             return jsonify({"error": "Content not found"}), 404
 
-        # Example: update likes/dislikes based on some logic
-        # This needs to be implemented as per your specific logic.
+        # Check if there's an existing action for the user on this content
+        existing_action = UserContentAction.query.filter_by(
+            user_id=user_id,
+            content_id=content_id
+        ).first()
+
+        if existing_action:
+            if existing_action.action == 'like':
+                return jsonify({"message": "Already liked"}), 200
+            elif existing_action.action == 'dislike':
+                # Update the action to like
+                existing_action.action = 'like'
+            else:
+                # Existing action is neither like nor dislike
+                existing_action.action = 'like'
+        else:
+            # Create a new like action
+            new_action = UserContentAction(
+                user_id=user_id,
+                content_id=content_id,
+                action='like'
+            )
+            db.session.add(new_action)
 
         db.session.commit()
-        return jsonify({"success": f"Content liked successfully"}), 200
+        return jsonify({"success": "Content liked successfully"}), 200
 
     except Exception as e:
         db.session.rollback()
