@@ -9,13 +9,29 @@ from flask_restful import Api, Resource
 from models import db, User, Category, Article, Video, Audio, Comment, BlacklistedToken, UserContentAction
 import traceback
 import base64
+from flask_mail import Mail, Message
+import sendgrid
+from sendgrid.helpers.mail import Mail
+import uuid
+from datetime import datetime, timedelta
+import os
+import sys
+import json
+
 
 app = Flask(__name__)
 CORS(app)
 
+
+#global SEND_GRID_TOKEN
+#global API_END_POINT_SENDGRID
+
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:database@localhost:5432/techstudy"
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"
+#app.config['SENDGRID_API_KEY'] = 'sendgrid'
+#SEND_GRID_TOKEN = os.environ.get('SENDGRID_API_KEY', None)
+#API_END_POINT_SENDGRID = os.environ.get('API_END_POINT_SENDGRID', None)
 
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
@@ -24,6 +40,68 @@ api = Api(app)
 migrate = Migrate(app, db)
 db.init_app(app)
 
+#class EmailVerification(Resource):
+#
+ #   def __init__(self):
+  #      self.emails = parser.parse_args().get('emails', None)
+#
+ #   def get(self):
+  #      if self.emails is None:
+   #         return {'message': 'No emails provided'}, 400
+    #    else:
+     #       return EmailProcessor.process(emails=self.emails)
+        
+#class EmailProcessor:
+ #   @staticmethod
+  #  def process(emails):
+   #     try:
+    #        email_tem = []
+     #       email_resp = []
+
+      #      if emails is None:
+       #          if len(emails) >= 1:
+        #             for email in emails.split(','):
+         #                helper = Emails()
+          #               response = helper.get(email=email)
+           #              email_tem.append(response)
+            #             email_resp.append(response)
+             #       data = dict(zip(email_tem, email_resp))
+              #      return data
+                    
+
+
+
+        
+#parser = reqparse.RequestParser()
+
+#parser.add_argument("emails", type=str, required=True, help="Emails sepaerated by comma [String]")
+
+#@app.route('/verify-email', methods=['POST'])
+
+
+#app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+#app.config['MAIL_PORT'] = 587 # May be another value based on the server
+#app.config['MAIL_USE_TLS'] = True # Test first to see whether true or false works
+#app.config['MAIL_USE_SSL'] = False # Test first to see whether true or false works
+# app.config['MAIL_DEBUG'] = True # same value as the debug
+#app.config['MAIL_USERNAME'] = 'alistairsmunene@gmail.com'
+#app.config['MAIL_PASSWORD'] = 'cnjg loxy ymfv tpjv' # will move this to a .env file for safety
+#app.config['MAIL_DEFAULT_SENDER'] = 'alistairsmunene@gmail.com'
+
+# Initialising Flask-Mail
+#mail = Mail(app)
+
+#def send_verification_email(to_email, token):
+ #   sg = sendgrid.SendGridAPIClient(api_key=app.config['SENDGRID_API_KEY'])
+  #  from_email = 'alistairsmunene@gmail.com'
+   # subject = 'Please verify your email'
+    #body = f'Click the link below to verify your email:\n\nhttp://yourdomain.com/verify-email?token={token}'
+
+    #email = Mail(from_email, to_email, subject, body)
+   # try:
+    #    sg.send(email)
+    #except Exception as e:
+    #    print(f'Error sending email: {str(e)}')
 
 # user_id = get_jwt_identity()
 # Homepage Routes
@@ -34,8 +112,7 @@ def home_page():
     return jsonify({"message": "Welcome to TechStudy"}), 200
 
 
-# User Sign Up
-@app.route('/users', methods=['POST']) #works fine
+@app.route('/users', methods=['POST'])
 def user_sign_up():
     data = request.get_json()
     user_type = data.get('user_type')
@@ -43,18 +120,27 @@ def user_sign_up():
     email = data.get('email')
     password = data.get('password')
 
+    # Validate user type
     if user_type not in ['student', 'staff']:
         return jsonify({'error': 'Invalid user type'}), 400
 
+    # Create a new user with hashed password
     new_user = User(
         username=username,
         email=email,
         password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
-        role=user_type
+        role=user_type,
+        is_verified=True  # Set is_verified to True since no email verification is required
     )
+    
+    # Add the new user to the database
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'success': f'{user_type.capitalize()} has been created successfully'}), 201
+
+    return jsonify({
+        'success': f'{user_type.capitalize()} has been created successfully.'
+    }), 201
+
 
 # User Login
 @app.route('/login', methods=['POST']) #works fine
@@ -411,6 +497,113 @@ def like_content(content_type, content_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+@app.route('/<string:content_type>/<int:content_id>/flag', methods=['POST'])
+@jwt_required()
+def flag_content(content_type, content_id):
+    user_id = get_jwt_identity()
+
+    if content_type not in ['video', 'audio', 'article']:
+        return jsonify({"error": "Invalid content type"}), 400
+
+    # Retrieve the content based on the content type
+    if content_type == 'video':
+        content = Video.query.get(content_id)
+    elif content_type == 'audio':
+        content = Audio.query.get(content_id)
+    elif content_type == 'article':
+        content = Article.query.get(content_id)
+
+    if not content:
+        return jsonify({"error": "Content not found"}), 404
+
+    # Check if there's an existing action for the user on this content
+    existing_action = UserContentAction.query.filter_by(
+        user_id=user_id,
+        content_type=content_type,
+        content_id=content_id
+    ).first()
+
+    if existing_action:
+        return jsonify({"error": "Content already flagged by this user"}), 400
+
+    # Record the flagging action
+    new_action = UserContentAction(
+        user_id=user_id,
+        content_type=content_type,
+        content_id=content_id,
+        action_type='flagged'  # You can also have 'reported' or other types of actions
+    )
+    db.session.add(new_action)
+    db.session.commit()
+
+    return jsonify({"success": "Content flagged successfully"}), 200
+
+@app.route('/<string:content_type>/<int:content_id>/remove', methods=['POST'])
+@jwt_required()
+def remove_content(content_type, content_id):
+    user_id = get_jwt_identity()
+
+    # Check if the user is an admin
+    user = User.query.get(user_id)
+    if not user or not user.is_admin:
+        return jsonify({"error": "Admin access required"}), 403
+
+    if content_type not in ['video', 'audio', 'article']:
+        return jsonify({"error": "Invalid content type"}), 400
+
+    # Retrieve the content based on the content type
+    if content_type == 'video':
+        content = Video.query.get(content_id)
+    elif content_type == 'audio':
+        content = Audio.query.get(content_id)
+    elif content_type == 'article':
+        content = Article.query.get(content_id)
+
+    if not content:
+        return jsonify({"error": "Content not found"}), 404
+
+    # Remove the content
+    db.session.delete(content)
+    db.session.commit()
+
+    return jsonify({"success": "Content removed successfully"}), 200
+@app.route('/content', methods=['GET'])
+@jwt_required()
+def get_content():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Retrieve user preferences
+    preferences = user.preferences or []
+
+    # Query content based on preferences
+    if 'video' in preferences:
+        videos = Video.query.all()
+    else:
+        videos = []
+
+    if 'audio' in preferences:
+        audios = Audio.query.all()
+    else:
+        audios = []
+
+    if 'article' in preferences:
+        articles = Article.query.all()
+    else:
+        articles = []
+
+    # Combine and return the filtered content
+    content = {
+        'videos': [video.to_dict() for video in videos],
+        'audios': [audio.to_dict() for audio in audios],
+        'articles': [article.to_dict() for article in articles]
+    }
+
+    return jsonify(content), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

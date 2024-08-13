@@ -16,6 +16,8 @@ flask-babel = "*"
 psycopg2-binary = "*"
 flask-restful = "*"
 flask-babelex = "*"
+flask-mail = "*"
+sendgrid = "*"
 
 [dev-packages]
 
