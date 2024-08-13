@@ -9,6 +9,9 @@ db = SQLAlchemy()
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True))
+user_categories = db.Table('user_categories',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True))
 
 # User Model
 class User(db.Model, UserMixin, SerializerMixin):
@@ -21,6 +24,15 @@ class User(db.Model, UserMixin, SerializerMixin):
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(DateTime, server_default=func.current_timestamp())
     updated_at = db.Column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'active': self.active,
+            'created_at': self.created_at
+        }
     
     # Relationships
     roles = db.relationship('Role', secondary=user_roles, back_populates='users')
@@ -28,9 +40,15 @@ class User(db.Model, UserMixin, SerializerMixin):
     audios = db.relationship('Audio', back_populates='user', lazy=True, cascade='all, delete-orphan')
     articles = db.relationship('Article', back_populates='user', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    categories = db.relationship('Category', secondary=user_categories, back_populates='subscribers')
+    content_actions = db.relationship('UserContentAction', back_populates='user', lazy=True, cascade='all, delete-orphan')
     
     # Serialize rules
-    serialize_rules = ('-roles.users',)
+    serialize_rules = ('-roles.users','-videos.user', '-audios.user', '-articles.user', '-comments.user', '-categories.subscribers', '-content_actions.user')
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username={self.username}, email={self.email}, role_ids={[r.id for r in self.roles]})>"
+
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email}, role_ids={[r.id for r in self.roles]})>"
@@ -140,5 +158,47 @@ class Comment(db.Model, SerializerMixin):
     def __repr__(self):
         return f"<Comment(id={self.id}, content={self.content}, user_id={self.user_id})>"
 
+# Categories Model
+class Category(db.Model, SerializerMixin):
+    __tablename__ = 'categories'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(DateTime, server_default=func.current_timestamp())
 
-#Likes Model
+    # Relationships
+    subscribers = db.relationship('User', secondary=user_categories, back_populates='categories')
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name})>"
+
+    # Serialize rules
+    serialize_rules = ('-id',)
+
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name})>"
+    
+
+class BlacklistedToken(db.Model):
+    __tablename__ = 'blacklisted_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(500), unique=True, nullable=False)
+    added_at = db.Column(db.DateTime, server_default=func.current_timestamp())
+    
+    def __repr__(self):
+        return f"<BlacklistedToken(token={self.token})>"
+class UserContentAction(db.Model):
+    __tablename__ = 'user_content_actions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content_id = db.Column(db.Integer, nullable=False)
+    content_type = db.Column(db.String(50), nullable=False)  # 'video', 'audio', 'article'
+    action = db.Column(db.String(10), nullable=False)  # 'like', 'dislike', 'no_engagement'
+
+    user = db.relationship('User', back_populates='content_actions')
+    
+   
+    def __repr__(self):
+        return f"<UserContentAction(user_id={self.user_id}, content_id={self.content_id}, content_type={self.content_type}, action={self.action})>"
