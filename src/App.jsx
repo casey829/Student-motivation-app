@@ -10,7 +10,7 @@ import StudentDashboard from './FrontEnd/Components/StudentDashboard';
 function App() {
   return (
 
-  <StaffDashboard/>
+  <StudentMotivation/>
  
 
    
