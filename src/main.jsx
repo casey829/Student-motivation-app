@@ -1,9 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import StudentMotivation from './FrontEnd/Components/Homepage/StudentMotivation.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-     <App/>
+    <StudentMotivation/>
+    
   </React.StrictMode>,
 )
