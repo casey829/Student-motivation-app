@@ -9,7 +9,6 @@ db = SQLAlchemy()
 user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True))
-
 user_categories = db.Table('user_categories',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True))
@@ -25,6 +24,15 @@ class User(db.Model, UserMixin, SerializerMixin):
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(DateTime, server_default=func.current_timestamp())
     updated_at = db.Column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'active': self.active,
+            'created_at': self.created_at
+        }
     
     # Relationships
     roles = db.relationship('Role', secondary=user_roles, back_populates='users')
@@ -32,9 +40,14 @@ class User(db.Model, UserMixin, SerializerMixin):
     audios = db.relationship('Audio', back_populates='user', lazy=True, cascade='all, delete-orphan')
     articles = db.relationship('Article', back_populates='user', lazy=True, cascade='all, delete-orphan')
     comments = db.relationship('Comment', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    categories = db.relationship('Category', secondary=user_categories, back_populates='subscribers')
     
     # Serialize rules
     serialize_rules = ('-roles.users',)
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username={self.username}, email={self.email}, role_ids={[r.id for r in self.roles]})>"
+
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email}, role_ids={[r.id for r in self.roles]})>"
@@ -144,7 +157,6 @@ class Comment(db.Model, SerializerMixin):
     def __repr__(self):
         return f"<Comment(id={self.id}, content={self.content}, user_id={self.user_id})>"
 
-
 # Categories Model
 class Category(db.Model, SerializerMixin):
     __tablename__ = 'categories'
@@ -159,11 +171,19 @@ class Category(db.Model, SerializerMixin):
     def __repr__(self):
         return f"<Category(id={self.id}, name={self.name})>"
 
-    
-
-
     # Serialize rules
     serialize_rules = ('-id',)
 
+
     def __repr__(self):
         return f"<Category(id={self.id}, name={self.name})>"
+    
+
+class BlacklistedToken(db.Model):
+    __tablename__ = 'blacklisted_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(500), unique=True, nullable=False)
+    added_at = db.Column(db.DateTime, server_default=func.current_timestamp())
+    
+    def __repr__(self):
+        return f"<BlacklistedToken(token={self.token})>"
