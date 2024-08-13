@@ -1,6 +1,8 @@
 import React from "react";
 import styles from '../Homepage/style.css/StudentMotivation.module.css';
 import SignUpButton from "./SignUpButton";
+import LoginForm from "./LoginForm";
+import SignupForm from "./SignupForm";
 
 
 function StudentMotivation() {

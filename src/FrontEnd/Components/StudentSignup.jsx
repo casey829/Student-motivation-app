@@ -6,9 +6,7 @@ const StudentSignup = () => {
     <div className="signup-container">
       <h1>Student signup</h1>
       <form>
-        <input type="text" placeholder="First name" />
-        <input type="text" placeholder="Last name" />
-        <input type="text" placeholder="Student ID" />
+        <input type="text" placeholder="User name" />
         <input type="email" placeholder="Email Address" />
         <input type="password" placeholder="Password" />
         <p>

@@ -6,10 +6,7 @@ const StaffSignup = () => {
     <div className="signup-container">
       <h1>Staff SignUp</h1>
       <form>
-        <input type="text" placeholder="First name" />
-        <input type="text" placeholder="Last name" />
-        <input type="text" placeholder="Staff Position" />
-        <input type="text" placeholder="Staff ID" />
+        <input type="text" placeholder="User name" />
         <input type="email" placeholder="Email Address" />
         <input type="password" placeholder="Password" />
         <p>
