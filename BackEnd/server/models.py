@@ -10,6 +10,10 @@ user_roles = db.Table('user_roles',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True))
 
+user_categories = db.Table('user_categories',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True))
+
 # User Model
 class User(db.Model, UserMixin, SerializerMixin):
     __tablename__ = 'users'
@@ -141,4 +145,25 @@ class Comment(db.Model, SerializerMixin):
         return f"<Comment(id={self.id}, content={self.content}, user_id={self.user_id})>"
 
 
-#Likes Model
+# Categories Model
+class Category(db.Model, SerializerMixin):
+    __tablename__ = 'categories'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(DateTime, server_default=func.current_timestamp())
+
+    # Relationships
+    subscribers = db.relationship('User', secondary=user_categories, back_populates='categories')
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name})>"
+
+    
+
+
+    # Serialize rules
+    serialize_rules = ('-id',)
+
+    def __repr__(self):
+        return f"<Category(id={self.id}, name={self.name})>"
