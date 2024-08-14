@@ -52,7 +52,7 @@ const StudentMotivation = () => {
     let bodyData = {};
   
     if (modalType === 'signup') {
-      url = 'http://127.0.0.1:5000/users';
+      url = 'http://127.0.0.1:5000/sign-up';
       bodyData = {
         username: formData.userName,
         email: formData.email,
