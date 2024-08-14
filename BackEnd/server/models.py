@@ -1,6 +1,8 @@
 from sqlalchemy_serializer import SerializerMixin
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy import DateTime, func
+from sqlalchemy.dialects.postgresql import ARRAY
+
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -21,7 +23,10 @@ class User(db.Model, UserMixin, SerializerMixin):
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(255), nullable=True)
-    active = db.Column(db.Boolean, default=True)
+    is_verified = db.Column(db.Boolean, default=True)
+    verification_token = db.Column(db.String(255),unique=True, nullable=True)
+    token_expiry = db.Column(db.DateTime, nullable=True)
+    preferences = db.Column(ARRAY(db.String),nullable=True)
     created_at = db.Column(DateTime, server_default=func.current_timestamp())
     updated_at = db.Column(DateTime, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
