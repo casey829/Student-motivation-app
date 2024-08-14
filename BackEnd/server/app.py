@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from io import BytesIO
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_restful import Api
@@ -15,7 +15,7 @@ import base64
 import uuid
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Configuring CORS
 
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:database@localhost:5432/techstudy"

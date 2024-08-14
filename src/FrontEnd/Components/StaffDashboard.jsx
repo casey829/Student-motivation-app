@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { CiFlag1 } from "react-icons/ci";
-import { FcApprove } from "react-icons/fc";
-import { IoIosArrowDropdown } from "react-icons/io";
-import { IoAddCircleOutline } from "react-icons/io5";
-import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from "react-icons/ai";
-import { CiUser } from "react-icons/ci";
-import { IoIosLogOut } from "react-icons/io";
+import React, { useState, useEffect } from 'react';
+import { MdOutlineSpaceDashboard } from 'react-icons/md';
+import { TiUserAdd } from 'react-icons/ti';
+import { RiFileMusicLine, RiArticleLine, RiVideoLine } from 'react-icons/ri';
+import { IoIosLogOut } from 'react-icons/io';
+import { BiEdit } from 'react-icons/bi';
+import { CiFlag1 } from 'react-icons/ci';
+import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from 'react-icons/ai';
 
 function StaffDashboard() {
-  const [userName] = useState("Casey");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(""); 
   const [contentType, setContentType] = useState("");
   const [contentData, setContentData] = useState({
+    id: "",
     title: "",
     description: "",
     link: ""
@@ -23,138 +24,157 @@ function StaffDashboard() {
   });
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedContent, setSelectedContent] = useState(null); 
+  const [profileData, setProfileData] = useState({
+    name: "",
+    UserId: ""
+  });
+  const [profiles, setProfiles] = useState([]);
 
+  // Fetch stored data from local storage
   useEffect(() => {
     const storedContentList = localStorage.getItem('contentList');
     const storedCategories = localStorage.getItem('categories');
+    const storedProfiles = localStorage.getItem('profiles');
+
     if (storedContentList) {
       setContentList(JSON.parse(storedContentList));
     }
     if (storedCategories) {
       setCategories(JSON.parse(storedCategories));
     }
+    if (storedProfiles) {
+      setProfiles(JSON.parse(storedProfiles));
+    }
   }, []);
 
-  const handleCategorize = async (type) => {
+  // Helper function for API requests
+  const handleRequest = async (url, method, body = null) => {
     try {
-      const response = await fetch(`http://localhost:3000/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ type })
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : null
       });
-      const data = await response.json();
-      console.log(data.message);
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      return await response.json();
     } catch (error) {
-      console.error("Error categorizing content:", error);
+      console.error(`Error with ${method} request:`, error);
+      throw error;
     }
   };
 
-  const handleApprove = async (type) => {
+  // Handle creating a new profile
+  const handleCreateProfile = async (e) => {
+    e.preventDefault();
     try {
-      const response = await fetch(`/api/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ type })
-      });
-      const data = await response.json();
-      console.log(data.message);
+      const response = await handleRequest("http://localhost:3000/users", 'POST', profileData);
+      if (response.success) {
+        alert("Profile created successfully!");
+
+        const newProfile = {
+          name: profileData.name,
+          UserId: profileData.UserId,
+          id: response.data.id,
+        };
+
+        const updatedProfiles = [...profiles, newProfile];
+        setProfiles(updatedProfiles);
+        localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
+
+        handleCloseModal();
+      } else {
+        alert(`Error: ${response.message}`);
+      }
     } catch (error) {
-      console.error("Error approving content:", error);
+      console.error("Error creating profile:", error);
+      alert("An error occurred while creating the profile.");
     }
   };
 
-  const handleFlag = async (type) => {
+  // Handle creating new content
+  const handleCreateContent = async (e) => {
+    e.preventDefault();
     try {
-      const response = await fetch(`/api/flag`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ type })
-      });
-      const data = await response.json();
-      console.log(data.message);
+      const response = await handleRequest(`http://localhost:3000/content/${selectedCategory}`, 'POST', contentData);
+      if (response.success) {
+        const updatedContentList = { 
+          ...contentList, 
+          [selectedCategory]: [...(contentList[selectedCategory] || []), contentData] 
+        };
+        localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+        setContentList(updatedContentList);
+        handleCloseModal();
+      } else {
+        alert(`Error: ${response.message}`);
+      }
     } catch (error) {
-      console.error("Error flagging content:", error);
+      console.error("Error creating content:", error.message);
     }
   };
 
-  const handleLike = async () => {
+  // Handle editing existing content
+  const handleEditContent = async (e) => {
+    e.preventDefault();
     try {
-      const response = await fetch(`/api/like`, {
-        method: 'POST'
-      });
-      const data = await response.json();
-      console.log(data.message);
+      const response = await handleRequest(`http://localhost:3000/content/${contentData.id}`, 'PUT', contentData);
+      if (!response.success) throw new Error(`Error: ${response.message}`);
+
+      const updatedContentList = {
+        ...contentList,
+        [selectedCategory]: contentList[selectedCategory].map(item =>
+          item.id === contentData.id ? contentData : item
+        )
+      };
+      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+      setContentList(updatedContentList);
+      handleCloseModal();
     } catch (error) {
-      console.error("Error liking content:", error);
+      console.error("Error editing content:", error.message);
     }
   };
 
-  const handleDislike = async () => {
-    try {
-      const response = await fetch(`/api/dislike`, {
-        method: 'POST'
-      });
-      const data = await response.json();
-      console.log(data.message);
-    } catch (error) {
-      console.error("Error disliking content:", error);
+  // Handle opening modals
+  const handleOpenModal = (type, content = null) => {
+    setModalType(type);
+    if (type === 'createContent') {
+      setContentType(type);
     }
-  };
-
-  const handleComment = async () => {
-    try {
-      const response = await fetch(`/api/comment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ comment: "Sample comment" })
-      });
-      const data = await response.json();
-      console.log(data.message);
-    } catch (error) {
-      console.error("Error commenting on content:", error);
+    if (content) {
+      setContentData(content);
+      setSelectedContent(content);
     }
-  };
-
-  const handleOpenModal = () => {
     setIsModalOpen(true);
   };
 
+  // Handle closing modals
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setContentType("");
-    setContentData({
-      title: "",
-      description: "",
-      link: ""
-    });
+    setContentData({ id: "", title: "", description: "", link: "" });
+    setProfileData({ name: "", UserId: "" });
     setSelectedCategory("");
+    setSelectedContent(null);
   };
 
-  const handleCategorySelect = (type) => {
-    setContentType(type);
-    handleOpenModal();
-  };
-
+  // Handle changes in content input fields
   const handleContentChange = (e) => {
     const { name, value } = e.target;
-    setContentData({
-      ...contentData,
-      [name]: value
-    });
+    setContentData(prevData => ({ ...prevData, [name]: value }));
   };
 
+  // Handle changes in profile input fields
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  // Handle changes in category selection
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
 
+  // Handle adding a new category
   const handleAddCategory = () => {
     const newCategory = prompt("Enter new category name:");
     if (newCategory && !categories.includes(newCategory)) {
@@ -164,260 +184,205 @@ function StaffDashboard() {
     }
   };
 
-  const handleCreateContent = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`http://localhost:3000/content/${selectedCategory}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(contentData)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error: ${response.status} - ${errorText}`);
-      }
-  
-      const data = await response.json();
-      console.log(data.message);
-  
-      const updatedContentList = {
-        ...contentList,
-        [selectedCategory]: [...(contentList[selectedCategory] || []), contentData]
-      };
-      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
-      setContentList(updatedContentList);
-      handleCloseModal();
-    } catch (error) {
-      console.error("Error creating content:", error.message);
-    }
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/';  // Redirect to the homepage
   };
-  
 
   return (
     <div className="dashboard-container">
       <div className="sidebar">
         <div className="logo">Logo</div>
-        <div className="dashboard-text">Dashboard</div>
-      </div>
-
-      <div className="add-icon-container">
-        <div className="add-icon" onClick={handleOpenModal}>
-          <IoAddCircleOutline />
+        <div className="sidebar-item">
+          <MdOutlineSpaceDashboard className="sidebar-icon" />
+          <span className="sidebar-text">Dashboard</span>
         </div>
+        <p className="sidebar-item" onClick={() => handleOpenModal('createProfile')}>
+          <TiUserAdd className="sidebar-icon" />
+          <span className="sidebar-text">Create Profile</span>
+        </p>
+        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
+          <RiFileMusicLine className="sidebar-icon" />
+          <span className="sidebar-text">Add Audio</span>
+        </p>
+        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
+          <RiArticleLine className="sidebar-icon" />
+          <span className="sidebar-text">Add Article</span>
+        </p>
+        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
+          <RiVideoLine className="sidebar-icon" />
+          <span className="sidebar-text">Add Video</span>
+        </p>
+        <p className="sidebar-item" onClick={handleLogout}>
+          <IoIosLogOut className="sidebar-icon"/>
+          <span className="sidebar-text">Logout</span>
+        </p>
       </div>
 
       <div className="main-content">
-        <div className="header">
-          <div className="header-right">
-            <p className="user-name">
-              <CiUser />
-              {userName}
-            </p>
-            <i className="logout-icon"><IoIosLogOut /></i>
-          </div>
-        </div>
-
-        <div className="content">
-          <div className="center-text">
-            <h2>Categorize Uploaded Videos</h2>
-          </div>
-
-          <div className="section">
-            <ul className="actions">
-              <li>
-                <button
-                  className="categorize-btn"
-                  onClick={() => handleCategorize("Videos")}
-                >
-                  Categorize <IoIosArrowDropdown />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="approve-btn"
-                  onClick={() => handleApprove("Videos")}
-                >
-                  Approve <FcApprove />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="flag-btn"
-                  onClick={() => handleFlag("Videos")}
-                >
-                  Flag <CiFlag1 />
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="center-text">
-            <h2>Categorize Uploaded Audios</h2>
-          </div>
-
-          <div className="section">
-            <ul className="actions">
-              <li>
-                <button
-                  className="categorize-btn"
-                  onClick={() => handleCategorize("Audios")}
-                >
-                  Categorize <IoIosArrowDropdown />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="approve-btn"
-                  onClick={() => handleApprove("Audios")}
-                >
-                  Approve <FcApprove />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="flag-btn"
-                  onClick={() => handleFlag("Audios")}
-                >
-                  Flag <CiFlag1 />
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="center-text">
-            <h2>Categorize Uploaded Articles</h2>
-          </div>
-
-          <div className="section">
-            <ul className="actions">
-              <li>
-                <button
-                  className="categorize-btn"
-                  onClick={() => handleCategorize("Articles")}
-                >
-                  Categorize <IoIosArrowDropdown />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="approve-btn"
-                  onClick={() => handleApprove("Articles")}
-                >
-                  Approve <FcApprove />
-                </button>
-              </li>
-              <li>
-                <button
-                  className="flag-btn"
-                  onClick={() => handleFlag("Articles")}
-                >
-                  Flag <CiFlag1 />
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div className="new-content-list">
-            <h2>Newly Created Content</h2>
+        {Object.keys(contentList).map((category) => (
+          <div className={category.toLowerCase()} key={category}>
             <ul>
-              {Object.keys(contentList).map((category) => (
-                <div className={category.toLowerCase()} key={category}>
-                  <h3>{category}</h3>
-                  <ul>
-                    {contentList[category].map((content, index) => (
-                      <li key={index}>
-                        <h4>{content.title}</h4>
-                        <p>{content.description}</p>
-                        {content.link && <a href={content.link} target="_blank" rel="noopener noreferrer">Link</a>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {contentList[category].map((content, index) => (
+                <li key={index}>
+                  <h4>{content.title}</h4>
+                  <p>{content.description}</p>
+                  {content.link && <a href={content.link} target="_blank" rel="noopener noreferrer">View More</a>}
+                  <button onClick={() => handleOpenModal('editContent', content)}>
+                    <BiEdit /> Edit
+                  </button>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/${content.id}`, 'DELETE');
+                      const updatedContentList = {
+                        ...contentList,
+                        [category]: contentList[category].filter(item => item.id !== content.id)
+                      };
+                      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
+                      setContentList(updatedContentList);
+                    } catch (error) {
+                      console.error("Error deleting content:", error.message);
+                    }
+                  }}>
+                    <CiFlag1 /> Delete
+                  </button>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/like/${content.id}`, 'POST');
+                    } catch (error) {
+                      console.error("Error liking content:", error.message);
+                    }
+                  }}>
+                    <AiOutlineLike /> Like
+                  </button>
+                  <button onClick={async () => {
+                    try {
+                      await handleRequest(`http://localhost:3000/content/dislike/${content.id}`, 'POST');
+                    } catch (error) {
+                      console.error("Error disliking content:", error.message);
+                    }
+                  }}>
+                    <AiOutlineDislike /> Dislike
+                  </button>
+                  <button onClick={async () => {
+                    const comment = prompt("Enter comment:");
+                    if (comment) {
+                      try {
+                        await handleRequest(`http://localhost:3000/content/comment/${content.id}`, 'POST', { comment });
+                      } catch (error) {
+                        console.error("Error commenting on content:", error.message);
+                      }
+                    }
+                  }}>
+                    <AiOutlineComment /> Comment
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
-
-          <div className="center-text">
-            <h2>Review Content</h2>
-          </div>
-
-          <div className="section">
-            <ul className="actions">
-              <li>
-                <button className="like-btn" onClick={handleLike}>
-                  Like <AiOutlineLike />
-                </button>
-              </li>
-              <li>
-                <button className="dislike-btn" onClick={handleDislike}>
-                  Dislike <AiOutlineDislike />
-                </button>
-              </li>
-              <li>
-                <button className="comment-btn" onClick={handleComment}>
-                  Comment <AiOutlineComment />
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
+        ))}
       </div>
 
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Create {contentType}</h2>
-            <form onSubmit={handleCreateContent}>
-              <label>
-                Title:
-                <input
-                  type="text"
-                  name="title"
-                  value={contentData.title}
-                  onChange={handleContentChange}
-                  required
-                />
-              </label>
-              <label>
-                Description:
-                <textarea
-                  name="description"
-                  value={contentData.description}
-                  onChange={handleContentChange}
-                  required
-                />
-              </label>
-              <label>
-                Link:
-                <input
-                  type="url"
-                  name="link"
-                  value={contentData.link}
-                  onChange={handleContentChange}
-                  placeholder="http://example.com"
-                />
-              </label>
-              <label>
-                Select Category:
-                <select value={selectedCategory} onChange={handleCategoryChange} required>
-                  <option value="">Select a category</option>
-                  {categories.map((category, index) => (
-                    <option key={index} value={category}>{category}</option>
-                  ))}
-                  <option value='video'>
-                Video
-                </option>
-                <option value='audio'>Audio</option>
-                <option value='article'>Article</option>
-                </select>
-                <button type="button" onClick={handleAddCategory}>Add New Category</button>
-              </label>
-              
-              <button type="submit">Submit</button>
-              <button type="button" onClick={handleCloseModal}>Close</button>
+            <h2>{modalType === 'createProfile' ? "Create Profile" : modalType === 'editContent' ? "Edit Content" : `Create ${contentType}`}</h2>
+            <form onSubmit={modalType === 'createProfile' ? handleCreateProfile : modalType === 'editContent' ? handleEditContent : handleCreateContent}>
+              {modalType === 'createProfile' && (
+                <>
+                  <label>
+                    Name:
+                    <input
+                      type="text"
+                      name="name"
+                      value={profileData.name}
+                      onChange={handleProfileChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    User ID:
+                    <input
+                      type="text"
+                      name="UserId"
+                      value={profileData.UserId}
+                      onChange={handleProfileChange}
+                      required
+                    />
+                  </label>
+                </>
+              )}
+              {modalType === 'createContent' && (
+                <>
+                  <label>
+                    Title:
+                    <input
+                      type="text"
+                      name="title"
+                      value={contentData.title}
+                      onChange={handleContentChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Description:
+                    <textarea
+                      name="description"
+                      value={contentData.description}
+                      onChange={handleContentChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Link:
+                    <input
+                      type="url"
+                      name="link"
+                      value={contentData.link}
+                      onChange={handleContentChange}
+                    />
+                  </label>
+                </>
+              )}
+              {modalType === 'editContent' && (
+                <>
+                  <label>
+                    Title:
+                    <input
+                      type="text"
+                      name="title"
+                      value={contentData.title}
+                      onChange={handleContentChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Description:
+                    <textarea
+                      name="description"
+                      value={contentData.description}
+                      onChange={handleContentChange}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Link:
+                    <input
+                      type="url"
+                      name="link"
+                      value={contentData.link}
+                      onChange={handleContentChange}
+                    />
+                  </label>
+                </>
+              )}
+              <div className="modal-buttons">
+                <button type="submit">
+                  {modalType === 'createProfile' ? "Create Profile" : modalType === 'editContent' ? "Save Changes" : `Create ${contentType}`}
+                </button>
+                <button type="button" onClick={handleCloseModal}>Cancel</button>
+              </div>
             </form>
           </div>
         </div>
