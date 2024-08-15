@@ -60,6 +60,8 @@ const StudentMotivation = () => {
         password: formData.password
       };
     }
+    //log the body data before sending it to the server
+    console.log('Body Data:', JSON.stringify(bodyData));
   
     try {
       const response = await fetch(url, {

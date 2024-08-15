@@ -43,6 +43,8 @@ app.config['MAIL_DEFAULT_SENDER'] = 'alistairsmunene@gmail.com'
 # Initialising Flask-Mail
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+
 # user_id = get_jwt_identity()
 # Homepage Routes
 
@@ -72,11 +74,11 @@ def user_sign_up():
         return jsonify({'error': 'Email already exists'}), 400
 
     token = s.dumps(email, salt='email-confirm')
-    
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(
         username=username,
         email=email,
-        password_hash=generate_password_hash(password),
+        password_hash=hashed_password,
         role=user_type,
         is_verified=False,  
         verification_token= token ,# Store token
@@ -112,7 +114,7 @@ def confirm_email(token):
             if user.verification_token == token:
                 # Mark the user as verified
                 user.is_verified = True
-                user.verification_token = None  # Reset the verification token
+                user.verification_token = token  # Reset the verification token
                 user.token_expiry = datetime.utcnow() + timedelta(hours=1)
                 db.session.commit()
                 print('Email confirmed! You can now log in.')
@@ -137,6 +139,9 @@ def user_login():
         return jsonify({"message": "Email and password are required"}), 400
     
     user = User.query.filter_by(email=email).first()
+
+    #Debugging output
+    print("Stored Password: ", user.password_hash)
 
     if user and bcrypt.check_password_hash(user.password_hash, password):
         access_token = create_access_token(identity=user.id)
