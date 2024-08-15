@@ -2,33 +2,35 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import image from '../image/Premium Vector _ Hand drawn back to school illustration.jpeg';
 import AdminDashboard from '../AdminDashboard';
-//import { axios } from 'axios';
+import StudentDashboard from '../StudentDashboard';
+import StaffDashboard from '../StaffDashboard';
 
 const StudentMotivation = () => {
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'login' or 'signup'
-  const [userType, setUserType] = useState(''); // 'Admin', 'Staff', or 'Student'
+  const [modalType, setModalType] = useState('');
+  const [userType, setUserType] = useState('');
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
     password: ''
   });
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Use useNavigate hook to programmatically navigate
 
   const handleButtonClick = (type) => {
-    setModalType(type);
-    setShowModal(true);
     if (type === 'admin') {
+      setShowModal(true);
+      setModalType('login');
       setUserType('Admin');
     } else {
+      setShowModal(true);
+      setModalType(type);
       setUserType('');
     }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setUserType('');
   };
 
   const handleRoleSelect = (type) => {
@@ -45,42 +47,57 @@ const StudentMotivation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    const url = modalType === 'signup'
-      ? 'http://127.0.0.1:5000/users'
-      : 'http://127.0.0.1:5000/login';
-  
-    const bodyData = {
-      username: formData.userName,
-      email: formData.email,
-      password: formData.password,
-      user_type: userType.toLowerCase(),
-    };
-  
+
+    let url = '';
+    let bodyData = {};
+
+    if (modalType === 'signup') {
+      url = 'http://localhost:3000/users'; // Replace with your Flask signup endpoint
+      bodyData = {
+        username: formData.userName,
+        email: formData.email,
+        password: formData.password,
+        role: userType.toLowerCase()
+      };
+    } else if (modalType === 'login') {
+      url = 'http://localhost:3000/login'; // Replace with your Flask login endpoint
+      bodyData = {
+        email: formData.email,
+        password: formData.password
+      };
+    }
+
     try {
-      const response = await axios.post(url, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyData),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyData)
       });
-  
-      const data = await response.json();
-  
+
+      const contentType = response.headers.get('Content-Type');
+      let data;
+
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text(); // Read response as text if not JSON
+      }
+
       if (response.ok) {
         alert(`${modalType === 'signup' ? 'Sign Up' : 'Login'} successful!`);
         if (modalType === 'login') {
-          if (userType === 'admin') {
-            navigate('/admin-dashboard');
-          } else if (userType === 'staff') {
-            navigate('/staff-dashboard');
-          } else if (userType === 'student') {
-            navigate('/student-dashboard');
-            console.log(response);
+          if (userType === 'Admin') {
+            navigate('/admin-dashboard'); // Redirect to the AdminDashboard
+          } else if (userType === 'Student') {
+            navigate('/student-dashboard'); // Redirect to the StudentDashboard
+          } else if (userType === 'Staff') {
+            navigate('/staff-dashboard'); // Redirect to the StaffDashboard
           }
         }
       } else {
-        alert(`Error: ${data.message}`);
-        console.log
+        alert(`Error: ${data}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -118,8 +135,9 @@ const StudentMotivation = () => {
             Engaging Articles: Stay informed with articles that demystify tech concepts, cover the latest trends, and offer career advice.
             Diverse Multimedia Content: Choose from videos, podcasts, or detailed articles to match your preferred learning style.
             Join Our Community: Enhance your tech knowledge and network with us. Every piece of content is designed to broaden your understanding and connect you with the tech world.
-            Explore TeckStudy today and discover your tech potential tomorrow.
+            Explore TeckStudy today and discover your tech potential tomorrow
           </p>
+
           <h2>The secret to your future is hidden in your daily routine.</h2>
         </div>
       </section>
@@ -130,13 +148,34 @@ const StudentMotivation = () => {
             <span className="close-button" onClick={handleCloseModal}>
               &times;
             </span>
-            {modalType === 'login' && userType === 'Admin' ? (
+            {modalType === 'admin' ? (
               <form onSubmit={handleSubmit}>
                 <h3>Admin Login</h3>
                 <input
                   type="email"
                   name="email"
                   placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="submit">Login</button>
+              </form>
+            ) : modalType === 'login' && userType ? (
+              <form onSubmit={handleSubmit}>
+                <h3>Login as {userType}</h3>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -199,6 +238,8 @@ const App = () => (
     <Routes>
       <Route path="/" element={<StudentMotivation />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/staff-dashboard" element={<StaffDashboard />} />
+      <Route path="/student-dashboard" element={<StudentDashboard />} />
     </Routes>
   </Router>
 );
