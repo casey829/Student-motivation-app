@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:database@localhost:5432/techstudy"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://user_database_v2g0_user:9eG3I1HHRXhLC0NiIMW1ZybtGD5Hzavo@dpg-cqkfepbqf0us73c9c5ug-a.oregon-postgres.render.com/user_database_v2g0"
 app.config["JWT_SECRET_KEY"] = "fsbdgfnhgvjnvhmvh"
 app.config["SECRET_KEY"] = "JKSRVHJVFBSRDFV"
 
