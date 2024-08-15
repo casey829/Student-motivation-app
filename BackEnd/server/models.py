@@ -1,6 +1,6 @@
-from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy_serializer import SerializerMixin # type: ignore
 from flask_security import UserMixin, RoleMixin
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func # type: ignore
 
 from flask_sqlalchemy import SQLAlchemy
 

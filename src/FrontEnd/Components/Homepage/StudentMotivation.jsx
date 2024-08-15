@@ -1,7 +1,11 @@
+
+
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import image from '../image/Premium Vector _ Hand drawn back to school illustration.jpeg';
 import AdminDashboard from '../AdminDashboard';
+import StudentDashboard from '../StudentDashboard';
+import StaffDashboard from '../StaffDashboard';
 
 const StudentMotivation = () => {
   const [showModal, setShowModal] = useState(false);
@@ -45,20 +49,20 @@ const StudentMotivation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     let url = '';
     let bodyData = {};
 
     if (modalType === 'signup') {
-      url = ' http://127.0.0.1:5000/users'; // Replace with your Flask signup endpoint
+      url = 'http://localhost:3000/users'; // Replace with your Flask signup endpoint
       bodyData = {
         username: formData.userName,
         email: formData.email,
         password: formData.password,
         role: userType.toLowerCase()
       };
-    } else if (modalType === 'login' && userType === 'Admin') {
-      url = ' http://127.0.0.1:5000/auth/login'; // Replace with your Flask login endpoint
+    } else if (modalType === 'login') {
+      url = 'http://localhost:3000/login'; // Replace with your Flask login endpoint
       bodyData = {
         email: formData.email,
         password: formData.password
@@ -74,18 +78,28 @@ const StudentMotivation = () => {
         body: JSON.stringify(bodyData)
       });
 
+      const contentType = response.headers.get('Content-Type');
+      let data;
 
-      const data = await response.json();
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text(); // Read response as text if not JSON
+      }
 
       if (response.ok) {
         alert(`${modalType === 'signup' ? 'Sign Up' : 'Login'} successful!`);
-        if (modalType === 'login' && userType === 'Admin') {
-          navigate('/admin-dashboard'); // Redirect to the AdminDashboard
-        } else {
-          // Handle other role navigations here
+        if (modalType === 'login') {
+          if (userType === 'Admin') {
+            navigate('/admin-dashboard'); // Redirect to the AdminDashboard
+          } else if (userType === 'Student') {
+            navigate('/student-dashboard'); // Redirect to the StudentDashboard
+          } else if (userType === 'Staff') {
+            navigate('/staff-dashboard'); // Redirect to the StaffDashboard
+          }
         }
       } else {
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -157,6 +171,27 @@ const StudentMotivation = () => {
                 />
                 <button type="submit">Login</button>
               </form>
+            ) : modalType === 'login' && userType ? (
+              <form onSubmit={handleSubmit}>
+                <h3>Login as {userType}</h3>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="submit">Login</button>
+              </form>
             ) : userType ? (
               <form onSubmit={handleSubmit}>
                 <h3>Sign Up as {userType}</h3>
@@ -205,6 +240,8 @@ const App = () => (
     <Routes>
       <Route path="/" element={<StudentMotivation />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/staff-dashboard" element={<StaffDashboard />} />
+      <Route path="/student-dashboard" element={<StudentDashboard />} />
     </Routes>
   </Router>
 );
