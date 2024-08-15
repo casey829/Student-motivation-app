@@ -35,26 +35,69 @@ def home_page():
 
 
 # User Sign Up
-@app.route('/users', methods=['POST']) #works fine
-def user_sign_up():
-    data = request.get_json()
-    user_type = data.get('user_type')
+# @app.route('/users', methods=['POST'])
+# def user_sign_up():
+#     data = request.json  # Get JSON data from the request
+    
+#     user_type = data['user_type']
+#     username = data['username']
+#     email = data['email']
+#     password = data['password']
+
+#     if user_type not in ['student', 'staff']:
+#         return jsonify({'error': 'Invalid user type'}), 400
+
+#     new_user = User(
+#         username=username,
+#         email=email,
+#         password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
+#         role=user_type
+#     )
+    
+#     db.session.add(new_user)
+#     db.session.commit()
+    
+#     return jsonify({'success': f'{user_type.capitalize()} has been created successfully'}), 201
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
 
-    if user_type not in ['student', 'staff']:
-        return jsonify({'error': 'Invalid user type'}), 400
+    if not username or not email or not password:
+        return jsonify({"error": "Missing required fields"}), 400
 
-    new_user = User(
-        username=username,
-        email=email,
-        password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
-        role=user_type
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({'success': f'{user_type.capitalize()} has been created successfully'}), 201
+    hashed_password = generate_password_hash(password)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute(
+            sql.SQL("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)"),
+            (username, email, hashed_password)
+        )
+        conn.commit()
+        return jsonify({"message": "User created successfully"}), 201
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        return jsonify({"error": "Username or email already exists"}), 409
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.route("/current_user", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    if current_user:
+        return jsonify({"id": current_user.id, "first_name": current_user.first_name, "second_name": current_user.second_name, "email": current_user.email}), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
 
 # User Login
 @app.route('/login', methods=['POST']) #works fine
@@ -159,6 +202,8 @@ def logout():
         traceback_str = traceback.format_exc()
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
+    
 # Create Category
 @app.route('/create/category', methods=['POST']) #works fine
 @jwt_required()
