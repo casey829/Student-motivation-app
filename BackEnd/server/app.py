@@ -623,7 +623,38 @@ def dislike_content(content_type, content_id):
         db.session.rollback()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
+# Approve Content
+@app.route('/admin/approve-content/<int:content_id>/<string:content_type>', methods=['POST'])
+@jwt_required()
+def approve_content(content_id, content_type):
+    # Get current user from JWT
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user['id'])
 
+    # Check if the current user is an admin
+    if user.role != 'admin':
+        return jsonify({"message": "Permission denied!"}), 403
+
+    # Find the content by type and ID
+    content = None
+    if content_type == 'video':
+        content = Video.query.get_or_404(content_id)
+    elif content_type == 'audio':
+        content = Audio.query.get_or_404(content_id)
+    elif content_type == 'article':
+        content = Article.query.get_or_404(content_id)
+    else:
+        return jsonify({"message": "Invalid content type!"}), 400
+
+    # Check if content is already approved
+    if content.is_approved:
+        return jsonify({"message": "Content is already approved!"}), 400
+
+    # Mark the content as approved
+    content.is_approved = True
+    db.session.commit()
+
+    return jsonify({"message": "Content approved successfully!"}), 200
 # Flag Content
 @app.route('/<string:content_type>/<int:content_id>/flag', methods=['POST'])
 @jwt_required()
@@ -743,6 +774,56 @@ def get_content():
     }
 
     return jsonify(content), 200
+@app.route('/content', methods=['GET'])
+@jwt_required()
+def get_content():
+    content_type = request.args.get('type')  # 'video', 'audio', or 'article'
+    title = request.args.get('title')  # Filter by title
+    category = request.args.get('category')  # Filter by category
+
+    # Validate content type
+    if content_type not in ['video', 'audio', 'article']:
+        return jsonify({"message": "Invalid content type!"}), 400
+
+    # Map content type to model
+    model = {
+        'video': Video,
+        'audio': Audio,
+        'article': Article
+    }.get(content_type)
+
+    # Start building the query
+    query = model.query
+
+    # Filter by title if provided
+    if title:
+        query = query.filter(model.title.ilike(f"%{title}%"))
+    
+    # Filter by category if provided
+    if category:
+        # Adjust based on your schema
+        query = query.join(model.category).filter(Category.name.ilike(f"%{category}%"))
+
+    try:
+        results = query.all()
+
+        content_list = [
+            {
+                'id': item.id,
+                'title': item.title,
+                'description': item.description,
+                'is_approved': item.is_approved,
+                'category': item.category.name if item.category else None
+            }
+            for item in results
+        ]
+
+        return jsonify(content_list), 200
+    
+    except Exception as e:
+        return jsonify({"message": f"Database error: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
