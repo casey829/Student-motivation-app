@@ -13,9 +13,9 @@ from models import db, User, Category, Article, Video, Audio, Comment, Blacklist
 import traceback
 import base64
 import uuid
-
+from datetime import datetime, timedelta
 app = Flask(__name__)
-CORS(app)  # Configuring CORS
+CORS(app)
 
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:database@localhost:5432/techstudy"
@@ -50,15 +50,20 @@ s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 @app.route('/homepage', methods=['GET']) #works fine
 def home_page():
     return jsonify({"message": "Welcome to TechStudy"}), 200
-   
+
 # User Sign Up
 @app.route('/sign-up', methods=['POST'])
 def user_sign_up():
     data = request.get_json()
-    user_type = data.get('user_type')
+
+    user_type = data.get('userType')  # Adjusted to match client-side
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
+
+    # Basic validation
+    if not all([user_type, username, email, password]):
+        return jsonify({'error': 'Missing required fields'}), 400
 
     if user_type not in ['student', 'staff']:
         return jsonify({'error': 'Invalid user type'}), 400
@@ -71,10 +76,11 @@ def user_sign_up():
     new_user = User(
         username=username,
         email=email,
-        password_hash=bcrypt.generate_password_hash(password).decode('utf-8'),
+        password_hash=generate_password_hash(password),
         role=user_type,
-        is_verified=False,  # Initially not verified
-        verification_token=token  # Store token
+        is_verified=False,  
+        verification_token= token ,# Store token
+        
     )
     
     db.session.add(new_user)
@@ -98,16 +104,23 @@ def user_sign_up():
 @app.route('/confirm-email/<token>', methods=['GET'])
 def confirm_email(token):
     try:
+        # Verify the token
         email = s.loads(token, salt='email-confirm', max_age=3600)
         user = User.query.filter_by(email=email).first()
 
-        if user and user.verification_token == token:
-            user.is_verified = True
-            user.verification_token = None  # Remove token after successful confirmation
-            db.session.commit()
-            return jsonify({'message': 'Email confirmed! You can now log in.'}), 200
+        if user:
+            if user.verification_token == token:
+                # Mark the user as verified
+                user.is_verified = True
+                user.verification_token = None  # Reset the verification token
+                user.token_expiry = datetime.utcnow() + timedelta(hours=1)
+                db.session.commit()
+                print('Email confirmed! You can now log in.')
+                return jsonify({'message': 'Email confirmed! You can now log in.'}), 200
+            else:
+                return jsonify({'error': 'Invalid or expired token.'}), 400
         else:
-            return jsonify({'error': 'Invalid or expired token.'}), 400
+            return jsonify({'error': 'User not found.'}), 404
     except SignatureExpired:
         return jsonify({'error': 'The token has expired.'}), 400
     except Exception as e:
@@ -728,4 +741,4 @@ def get_content():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port = 5000,debug=True)
