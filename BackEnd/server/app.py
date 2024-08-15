@@ -822,8 +822,7 @@ def get_content():
     
     except Exception as e:
         return jsonify({"message": f"Database error: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+    
 
 
 if __name__ == '__main__':
