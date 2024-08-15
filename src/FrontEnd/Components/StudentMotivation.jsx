@@ -4,15 +4,14 @@ import AdminDashboard from './AdminDashboard';
 import StaffDashboard from './StaffDashboard';
 import StudentDashboard from './StudentDashboard';
 import image from "../Components/image/back_to_school_illustration.jpeg";
-
 const StudentMotivation = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('');
-  const [userType, setUserType] = useState('');
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
-    password: ''
+    password: '',
+    userType: ''
   });
 
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const StudentMotivation = () => {
   const handleButtonClick = (type) => {
     setShowModal(true);
     setModalType(type);
-    setUserType('');
   };
 
   const handleCloseModal = () => {
@@ -28,13 +26,9 @@ const StudentMotivation = () => {
     setFormData({
       userName: '',
       email: '',
-      password: ''
+      password: '',
+      userType: ''
     });
-    setUserType('');
-  };
-
-  const handleRoleSelect = (type) => {
-    setUserType(type);
   };
 
   const handleChange = (e) => {
@@ -57,14 +51,13 @@ const StudentMotivation = () => {
         username: formData.userName,
         email: formData.email,
         password: formData.password,
-        role: userType.toLowerCase()
+        userType: formData.userType.toLowerCase()
       };
     } else if (modalType === 'login') {
-      url = 'http://127.0.0.1:5000/auth/login';
+      url = 'http://127.0.0.1:5000/login';
       bodyData = {
         email: formData.email,
-        password: formData.password,
-        role: userType.toLowerCase()
+        password: formData.password
       };
     }
   
@@ -88,11 +81,11 @@ const StudentMotivation = () => {
       if (response.ok) {
         alert(`${modalType === 'signup' ? 'Sign Up' : 'Login'} successful!`);
         if (modalType === 'login') {
-          if (userType === 'admin') {
+          if (data.role === 'admin') {
             navigate('/admin-dashboard');
-          } else if (userType === 'staff') {
+          } else if (data.role === 'staff') {
             navigate('/staff-dashboard');
-          } else if (userType === 'student') {
+          } else if (data.role === 'student') {
             navigate('/student-dashboard');
           }
         }
@@ -147,19 +140,47 @@ const StudentMotivation = () => {
             <span className="close-button" onClick={handleCloseModal}>
               &times;
             </span>
-            {userType ? (
+            {modalType === 'signup' && (
               <form onSubmit={handleSubmit}>
-                <h3>{modalType === 'signup' ? `Sign Up as ${userType}` : `${userType} Login`}</h3>
-                {modalType === 'signup' && (
-                  <input
-                    type="text"
-                    name="userName"
-                    placeholder="User Name"
-                    value={formData.userName}
-                    onChange={handleChange}
-                    required
-                  />
-                )}
+                <h3>Sign Up</h3>
+                <input
+                  type="text"
+                  name="userName"
+                  placeholder="User Name"
+                  value={formData.userName}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="text"
+                  name="userType"
+                  placeholder="staff or student"
+                  value={formData.userType}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="submit">Submit</button>
+              </form>
+            )}
+            {modalType === 'login' && (
+              <form onSubmit={handleSubmit}>
+                <h3>Login</h3>
                 <input
                   type="email"
                   name="email"
@@ -178,13 +199,6 @@ const StudentMotivation = () => {
                 />
                 <button type="submit">Submit</button>
               </form>
-            ) : (
-              <>
-                <h3>Select Your Role ({modalType})</h3>
-                <button onClick={() => handleRoleSelect('Admin')}>Admin</button>
-                <button onClick={() => handleRoleSelect('Staff')}>Staff</button>
-                <button onClick={() => handleRoleSelect('Student')}>Student</button>
-              </>
             )}
           </div>
         </div>
