@@ -74,20 +74,21 @@ class Role(db.Model, RoleMixin, SerializerMixin):
 class Video(db.Model, SerializerMixin):
     __tablename__ = 'videos'
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(255), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
     file_data = db.Column(db.LargeBinary, nullable=False)
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     uploaded_at = db.Column(DateTime, server_default=func.current_timestamp())
     approved = db.Column(db.Boolean, default=False)
-    category = db.Column(db.String(255), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id', ondelete='CASCADE'), nullable=False)
     
     # Relationships
     user = db.relationship('User', back_populates='videos')
+    category = db.relationship('Category', back_populates='videos')  # Define relationship with Category model
     comments = db.relationship('Comment', back_populates='video', lazy=True, cascade='all, delete-orphan')
 
     # Serialize rules
-    serialize_rules = ('-comments.video', '-user.videos')
+    serialize_rules = ('-comments.video', '-user.videos', '-category.videos')
 
     def __repr__(self):
         return f"<Video(id={self.id}, filename={self.filename}, user_id={self.user_id})>"
@@ -103,7 +104,13 @@ class Audio(db.Model, SerializerMixin):
     uploaded_at = db.Column(DateTime, server_default=func.current_timestamp())
     approved = db.Column(db.Boolean, default=False)
     category = db.Column(db.String(255), nullable=True)
-    
+    def to_dict (self):
+        return {
+            'id': self.id,
+            'filename': self.filename,
+            'description': self.description,
+            'user_id': self.user_id
+        }
     # Relationships
     user = db.relationship('User', back_populates='audios')
     comments = db.relationship('Comment', back_populates='audio', lazy=True, cascade='all, delete-orphan')
@@ -169,6 +176,13 @@ class Category(db.Model, SerializerMixin):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     created_at = db.Column(DateTime, server_default=func.current_timestamp())
+
+    def to_dict (self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description
+        }
 
     # Relationships
     subscribers = db.relationship('User', secondary=user_categories, back_populates='categories')

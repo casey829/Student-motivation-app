@@ -4,7 +4,6 @@ import { TiUserAdd } from 'react-icons/ti';
 import { RiFileMusicLine, RiArticleLine, RiVideoLine } from 'react-icons/ri';
 import { IoIosLogOut } from 'react-icons/io';
 import { BiEdit } from 'react-icons/bi';
-import { CiFlag1 } from 'react-icons/ci';
 
 function StaffDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,14 +13,10 @@ function StaffDashboard() {
     id: "",
     title: "",
     description: "",
-    link: "",
-    file: null
+    file: null,
+    category: ""
   });
-  const [contentList, setContentList] = useState({
-    video: [],
-    audio: [],
-    article: []
-  });
+  
   const [categories, setCategories] = useState([]);
   const [profileData, setProfileData] = useState({
     userName: "",
@@ -32,16 +27,16 @@ function StaffDashboard() {
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
+  const [videos, setVideos] = useState([]);
+  const [audios, setAudios] = useState([]);
+  const [articles, setArticles] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('access_token');
       try {
-        const [contentResponse, categoriesResponse, profilesResponse] = await Promise.all([
-          fetch('http://127.0.0.1:5000/content', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-          }),
-          fetch('http://127.0.0.1:5000/api/categories', {
+        const [categoriesResponse, profilesResponse] = await Promise.all([
+          fetch('http://127.0.0.1:5000/categories', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
           }),
@@ -51,23 +46,60 @@ function StaffDashboard() {
           })
         ]);
 
-        if (!contentResponse.ok || !categoriesResponse.ok || !profilesResponse.ok) {
+        if (!categoriesResponse.ok || !profilesResponse.ok) {
           throw new Error('Network response was not ok.');
         }
 
-        const contentData = await contentResponse.json();
         const categoriesData = await categoriesResponse.json();
         const profilesData = await profilesResponse.json();
 
-        setContentList(contentData);
         setCategories(categoriesData);
         setProfiles(profilesData);
       } catch (error) {
         console.error("Error fetching data:", error);
+        
       }
     };
 
     fetchData();
+  }, []);
+console.log(categories)
+  useEffect(() => {
+    const fetchContentData = async () => {
+      const token = localStorage.getItem('access_token');
+      try {
+        const [videosResponse, audiosResponse, articlesResponse] = await Promise.all([
+          fetch('http://127.0.0.1:5000/videos', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch('http://127.0.0.1:5000/audios', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch('http://127.0.0.1:5000/articles', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
+
+        if (!videosResponse.ok || !audiosResponse.ok || !articlesResponse.ok) {
+          throw new Error('Network response was not ok.');
+        }
+
+        const videosData = await videosResponse.json();
+        const audiosData = await audiosResponse.json();
+        const articlesData = await articlesResponse.json();
+
+        setVideos(videosData);
+        setAudios(audiosData);
+        setArticles(articlesData);
+      } catch (error) {
+        console.error('Error fetching content data:', error);
+      }
+    };
+
+    fetchContentData();
   }, []);
 
   const handleCreateContent = async (e) => {
@@ -75,6 +107,8 @@ function StaffDashboard() {
     const formData = new FormData();
     formData.append('title', contentData.title);
     formData.append('file', contentData.file);
+    formData.append('description', contentData.description);
+    formData.append('category', contentData.category);
 
     const token = localStorage.getItem('access_token');
     
@@ -87,14 +121,11 @@ function StaffDashboard() {
         body: formData
       });
       const result = await response.json();
-
       if (response.ok) {
-        const updatedContentList = { 
-          ...contentList, 
-          [contentType]: [...(contentList[contentType] || []), result.data] 
-        };
-        setContentList(updatedContentList);
+        alert('Content created successfully.');
         handleCloseModal();
+        // Refresh the content list
+        await fetchContentData();
       } else {
         alert(`Error: ${result.message}`);
       }
@@ -181,7 +212,7 @@ function StaffDashboard() {
     setModalType(type);
     if (type === 'createContent') {
       setContentType(category);
-      setContentData({ id: "", title: "", description: "", link: "", file: null });
+      setContentData({ id: "", title: "", description: "", link: "", file: null, category: "" });
     } else if (type === 'createProfile') {
       setProfileData({ userName: "", email: "", password: "" });
     }
@@ -191,7 +222,7 @@ function StaffDashboard() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setContentType("");
-    setContentData({ id: "", title: "", description: "", link: "", file: null });
+    setContentData({ id: "", title: "", description: "", link: "", file: null, category: "" });
     setProfileData({ userName: "", email: "", password: "" });
   };
 
@@ -219,9 +250,8 @@ function StaffDashboard() {
     setNewCategory(prevData => ({ ...prevData, [name]: value }));
   };
 
-  function handleLogout() {
+  const handleLogout = () => {
     const token = localStorage.getItem('access_token');
-
     fetch('http://127.0.0.1:5000/logout', {
       method: 'POST',
       headers: {
@@ -229,175 +259,151 @@ function StaffDashboard() {
         'Authorization': `Bearer ${token}`
       }
     })
-      .then(res => res.json())
-      .then(res => {
-        console.log(res);
-        localStorage.clear();
-        window.location.href = '/';  // Redirect to the homepage
-      })
-      .catch(error => {
-        console.error("Error logging out:", error);
-        alert("Something went wrong");
-      });
-  }
+    .then(response => {
+      if (response.ok) {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
+      } else {
+        alert('Logout failed.');
+      }
+    })
+    .catch(error => {
+      console.error('Error during logout:', error);
+      alert('Logout failed. Please try again.');
+    });
+  };
 
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ width: '200px', backgroundColor: '#f4f4f4', padding: '20px' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>Logo</div>
-        <div style={{ margin: '10px 0' }}>
-          <MdOutlineSpaceDashboard style={{ fontSize: '24px' }} />
-          <span>Dashboard</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createProfile')}>
-          <TiUserAdd style={{ fontSize: '24px' }} />
-          <span>Create Profile</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'audio')}>
-          <RiFileMusicLine style={{ fontSize: '24px' }} />
-          <span>Add Audio</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'article')}>
-          <RiArticleLine style={{ fontSize: '24px' }} />
-          <span>Add Article</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'video')}>
-          <RiVideoLine style={{ fontSize: '24px' }} />
-          <span>Add Video</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={handleOpenCategoryModal}>
-          <BiEdit style={{ fontSize: '24px' }} />
-          <span>Add Category</span>
-        </div>
-        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={handleLogout}>
-          <IoIosLogOut style={{ fontSize: '24px' }} />
-          <span>Logout</span>
-        </div>
-      </div>
-      <div style={{ flex: 1, padding: '20px' }}>
-        <h1>Content Management</h1>
-        <div>
+    <div className='dashboard'>
+      <aside className='sidebar'>
+        <nav>
+          <ul>
+            <li><a onClick={() => handleOpenModal('createContent', 'videos')}><RiVideoLine /> Add Video</a></li>
+            <li><a onClick={() => handleOpenModal('createContent', 'audios')}><RiFileMusicLine /> Add Audio</a></li>
+            <li><a onClick={() => handleOpenModal('createContent', 'articles')}><RiArticleLine /> Add Article</a></li>
+            <li><a onClick={() => handleOpenModal('createProfile')}><TiUserAdd /> Create Profile</a></li>
+            <li><a onClick={handleOpenCategoryModal}>Create Category</a></li>
+            <li><a onClick={handleLogout}><IoIosLogOut /> Logout</a></li>
+          </ul>
+        </nav>
+      </aside>
+      
+      <main className='content'>
+        <section>
           <h2>Videos</h2>
-          <ul>
-            {(contentList.video || []).map(content => (
-              <li key={content.id}>{content.title || 'Untitled'}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h2>Audio</h2>
-          <ul>
-            {(contentList.audio || []).map(content => (
-              <li key={content.id}>{content.title || 'Untitled'}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
+          {/* Replace contentList with fetched videos data */}
+          {videos.map(video => (
+            <div key={video.id}>
+              <h3>{video.title}</h3>
+              <p>{video.description}</p>
+              {/* Add more video details here */}
+            </div>
+          ))}
+        </section>
+        
+        <section>
+          <h2>Audios</h2>
+          {/* Replace contentList with fetched audios data */}
+          {audios.map(audio => (
+            <div key={audio.id}>
+              <h3>{audio.title}</h3>
+              <p>{audio.description}</p>
+              {/* Add more audio details here */}
+            </div>
+          ))}
+        </section>
+        
+        <section>
           <h2>Articles</h2>
-          <ul>
-            {(contentList.article || []).map(content => (
-              <li key={content.id}>{content.title || 'Untitled'}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      {isModalOpen && (
-        <div style={{
-          position: 'fixed', top: '0', left: '0', right: '0', bottom: '0',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
-          justifyContent: 'center', alignItems: 'center'
-        }}>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '400px' }}>
-            <h2>{modalType === 'createProfile' ? 'Create Profile' : `Add ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}</h2>
-            {modalType === 'createProfile' ? (
-              <form onSubmit={handleCreateProfile}>
-                <input
-                  type="text"
-                  name="userName"
-                  value={profileData.userName}
-                  onChange={handleProfileChange}
-                  placeholder="Username"
-                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={profileData.email}
-                  onChange={handleProfileChange}
-                  placeholder="Email"
-                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
-                />
-                <input
-                  type="password"
-                  name="password"
-                  value={profileData.password}
-                  onChange={handleProfileChange}
-                  placeholder="Password"
-                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
-                />
-                <button type="submit" style={{ padding: '10px', width: '100%' }}>Create Profile</button>
-              </form>
-            ) : (
-              <form onSubmit={handleCreateContent}>
-                <input
-                  type="text"
-                  name="title"
-                  value={contentData.title}
-                  onChange={handleContentChange}
-                  placeholder="Title"
-                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
-                />
-                {contentType === 'article' ? (
-                  <textarea
-                    name="description"
-                    value={contentData.description}
-                    onChange={handleContentChange}
-                    placeholder="Description"
-                    style={{ margin: '10px 0', padding: '10px', width: '100%', height: '100px' }}
-                  />
-                ) : (
-                  <input
-                    type="file"
-                    name="file"
-                    onChange={(e) => setContentData(prevData => ({ ...prevData, file: e.target.files[0] }))}
-                    style={{ margin: '10px 0', width: '100%' }}
-                  />
-                )}
-                <button type="submit" style={{ padding: '10px', width: '100%' }}>Submit</button>
-                <button type="button" onClick={handleCloseModal} style={{ padding: '10px', width: '100%', marginTop: '10px' }}>Close</button>
-              </form>
+          {/* Replace contentList with fetched articles data */}
+          {articles.map(article => (
+            <div key={article.id}>
+              <h3>{article.title}</h3>
+              <p>{article.description}</p>
+              {/* Add more article details here */}
+            </div>
+          ))}
+        </section>
+      </main>
+
+      {/* Modal for creating content */}
+      {isModalOpen && modalType === 'createContent' && (
+        <div className='modal'>
+          <h2>Create {contentType}</h2>
+          <form onSubmit={handleCreateContent}>
+            <label>
+              Title:
+              <input type='text' name='title' value={contentData.title} onChange={handleContentChange} required />
+            </label>
+            <label>
+              Description:
+              <textarea name='description' value={contentData.description} onChange={handleContentChange} required />
+            </label>
+            {contentType !== 'articles' && (
+              <label>
+                File:
+                <input type='file' name='file' onChange={(e) => setContentData({ ...contentData, file: e.target.files[0] })} required />
+              </label>
             )}
-          </div>
+            {contentType === 'articles' && (
+              <label>
+                Content:
+                <textarea name='link' value={contentData.link} onChange={handleContentChange} required />
+              </label>
+            )}
+            <label>
+              Category:
+              <select name='category' value={contentData.category} onChange={handleContentChange} required>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </label>
+            <button type='submit'>Create</button>
+            <button type='button' onClick={handleCloseModal}>Cancel</button>
+          </form>
         </div>
       )}
+
+      {/* Modal for creating profile */}
+      {isModalOpen && modalType === 'createProfile' && (
+        <div className='modal'>
+          <h2>Create Profile</h2>
+          <form onSubmit={handleCreateProfile}>
+            <label>
+              Username:
+              <input type='text' name='userName' value={profileData.userName} onChange={handleProfileChange} required />
+            </label>
+            <label>
+              Email:
+              <input type='email' name='email' value={profileData.email} onChange={handleProfileChange} required />
+            </label>
+            <label>
+              Password:
+              <input type='password' name='password' value={profileData.password} onChange={handleProfileChange} required />
+            </label>
+            <button type='submit'>Create</button>
+            <button type='button' onClick={handleCloseModal}>Cancel</button>
+          </form>
+        </div>
+      )}
+
+      {/* Modal for creating category */}
       {isCategoryModalOpen && (
-        <div style={{
-          position: 'fixed', top: '0', left: '0', right: '0', bottom: '0',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
-          justifyContent: 'center', alignItems: 'center'
-        }}>
-          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '400px' }}>
-            <h2>Add Category</h2>
-            <form onSubmit={handleCreateCategory}>
-              <input
-                type="text"
-                name="name"
-                value={newCategory.name}
-                onChange={handleCategoryChange}
-                placeholder="Category Name"
-                style={{ margin: '10px 0', padding: '10px', width: '100%' }}
-              />
-              <textarea
-                name="description"
-                value={newCategory.description}
-                onChange={handleCategoryChange}
-                placeholder="Category Description"
-                style={{ margin: '10px 0', padding: '10px', width: '100%', height: '100px' }}
-              />
-              <button type="submit" style={{ padding: '10px', width: '100%' }}>Add Category</button>
-              <button type="button" onClick={handleCloseCategoryModal} style={{ padding: '10px', width: '100%', marginTop: '10px' }}>Close</button>
-            </form>
-          </div>
+        <div className='modal'>
+          <h2>Create Category</h2>
+          <form onSubmit={handleCreateCategory}>
+            <label>
+              Category Name:
+              <input type='text' name='name' value={newCategory.name} onChange={handleCategoryChange} required />
+            </label>
+            <label>
+              Description:
+              <textarea name='description' value={newCategory.description} onChange={handleCategoryChange} required />
+            </label>
+            <button type='submit'>Create</button>
+            <button type='button' onClick={handleCloseCategoryModal}>Cancel</button>
+          </form>
         </div>
       )}
     </div>
