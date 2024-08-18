@@ -3,7 +3,7 @@ import { FaUser, FaPlus, FaCommentAlt, FaHeart, FaRegHeart } from 'react-icons/f
 import { MdPostAdd, MdOutlineBookmark } from 'react-icons/md';
 import { IoMdClose } from 'react-icons/io';
 
-const API_URL = 'http://localhost:3000'; // Base URL for API
+const API_URL = 'http://127.0.0.1:5000/student/dashboard'; // Base URL for API
 
 const StudentDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,6 +16,11 @@ const StudentDashboard = () => {
   const [interests, setInterests] = useState([]);
   const [newInterest, setNewInterest] = useState("");
 
+  // File upload states
+  const [videoFile, setVideoFile] = useState(null);
+  const [audioFile, setAudioFile] = useState(null);
+  const [articleContent, setArticleContent] = useState({ title: "", content: "" });
+
   useEffect(() => {
     fetchPosts();
     fetchWishlist();
@@ -26,17 +31,19 @@ const StudentDashboard = () => {
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on how you're storing JWT
+        },
         body: body ? JSON.stringify(body) : null
       });
 
       if (!response.ok) {
-        const errorText = await response.text(); // Get response text to debug
+        const errorText = await response.text();
         console.error(`Error with ${method} request to ${url}: ${response.status} ${response.statusText}, Response: ${errorText}`);
         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
       }
 
-      // Try to parse response as JSON
       try {
         return await response.json();
       } catch (jsonError) {
@@ -51,7 +58,7 @@ const StudentDashboard = () => {
 
   const fetchPosts = async () => {
     try {
-      const data = await handleRequest(`${API_URL}/content`, 'GET');
+      const data = await handleRequest(`http://127.0.0.1:5000/content/video/<int:content_id>`, 'GET');
       setPosts(data);
     } catch (error) {
       console.error("Failed to fetch posts:", error);
@@ -107,16 +114,13 @@ const StudentDashboard = () => {
   const handleAddToWishlist = async (post) => {
     try {
       if (isPostInWishlist(post.id)) {
-        // Remove from wishlist
-        await handleRequest(`$http://localhost:3000/wishlists/${post.id}`, 'DELETE');
+        await handleRequest(`${API_URL}/wishlists/${post.id}`, 'DELETE');
         const updatedWishlist = wishlist.filter(item => item.contentId !== post.id);
         setWishlist(updatedWishlist);
         localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
       } else {
-        // Add to wishlist
-        const response = await handleRequest('http://localhost:3000/wishlists', 'POST', { contentId: post.id });
+        const response = await handleRequest(`${API_URL}/wishlists`, 'POST', { contentId: post.id });
         if (response.message) {
-          console.log('Added to wishlist:', response.message);
           const updatedWishlist = [...wishlist, { contentId: post.id }];
           setWishlist(updatedWishlist);
           localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
@@ -126,7 +130,6 @@ const StudentDashboard = () => {
       console.error('Failed to add/remove wishlist:', error);
     }
   };
-  
 
   const handleCommentChange = (postId, content) => {
     setComments(prevComments => ({
@@ -165,6 +168,9 @@ const StudentDashboard = () => {
     setProfileData({ name: "", email: "" });
     setNewPost({ title: "", description: "", link: "", thumbnail: "" });
     setNewInterest('');
+    setVideoFile(null);
+    setAudioFile(null);
+    setArticleContent({ title: "", content: "" });
   };
 
   const handleProfileChange = (e) => {
@@ -175,7 +181,7 @@ const StudentDashboard = () => {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
-      await handleRequest('http://localhost:3000/profiles', 'PATCH', profileData);
+      await handleRequest(`${API_URL}/profiles`, 'PATCH', profileData);
       handleCloseModal();
     } catch (error) {
       console.error("Failed to update profile:", error);
@@ -184,7 +190,7 @@ const StudentDashboard = () => {
 
   const handleClearWishlist = async () => {
     try {
-      await handleRequest('http://localhost:3000/wishlists', 'DELETE');
+      await handleRequest(`${API_URL}/wishlists`, 'DELETE');
       setWishlist([]);
       localStorage.removeItem('wishlist');
       console.log('Wishlist cleared');
@@ -197,170 +203,117 @@ const StudentDashboard = () => {
     return wishlist.some(item => item.contentId === postId);
   };
 
-  return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="logo">My Dashboard</div>
-        <div className="sidebar-item" onClick={() => handleOpenModal('createProfile')}>
-          <FaUser className="sidebar-icon" />
-          <span className="sidebar-text">Profile</span>
-        </div>
-        <div className="sidebar-item" onClick={() => handleOpenModal('addPost')}>
-          <MdPostAdd className="sidebar-icon" />
-          <span className="sidebar-text">Add Post</span>
-        </div>
-        <div className="sidebar-item" onClick={() => handleOpenModal('addInterest')}>
-          <FaPlus className="sidebar-icon" />
-          <span className="sidebar-text">Add Interest</span>
-        </div>
-        <div className="sidebar-item" onClick={() => handleOpenModal('viewWishlist')}>
-          <MdOutlineBookmark className="sidebar-icon" />
-          <span className="sidebar-text">Wishlist</span>
-        </div>
-      </aside>
+  const handleVideoUpload = async (e) => {
+    e.preventDefault();
+    if (videoFile && videoFile.size <= 100 * 1024 * 1024) { // 100 MB
+      try {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const fileDataBase64 = reader.result.split(',')[1];
+          const data = { file: fileDataBase64, title: "Video Title" }; // Replace with actual title input if needed
+          try {
+            await handleRequest(`${API_URL}/upload/video`, 'POST', data);
+            handleCloseModal();
+          } catch (error) {
+            console.error('Failed to upload video:', error);
+          }
+        };
+        reader.readAsDataURL(videoFile);
+      } catch (error) {
+        console.error('Failed to upload video:', error);
+      }
+    }
+  };
 
-      <main className="main-content">
-        <section className="posts-section">
-          {posts.map(post => (
-            <div key={post.id} className="post-card">
-              <h3 className="post-title">{post.title}</h3>
-              <p className="post-description">{post.description}</p>
-              {post.thumbnail && <img src={post.thumbnail} alt={post.title} className="post-thumbnail" />}
-              <button
-                onClick={() => handleAddToWishlist(post)}
-                className={`wishlist-button ${isPostInWishlist(post.id) ? 'in-wishlist' : ''}`}
-              >
-                {isPostInWishlist(post.id) ? <FaHeart /> : <FaRegHeart />}
-              </button>
-              <div className="comments-section">
-                <input
-                  type="text"
-                  value={comments[post.id] || ''}
-                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                  placeholder="Add a comment..."
-                  className="comment-input"
-                />
-                <button onClick={() => handleAddComment(post.id)} className="comment-button">Comment</button>
-              </div>
-            </div>
-          ))}
-        </section>
-      </main>
+  const handleAudioUpload = async (e) => {
+    e.preventDefault();
+    if (audioFile && audioFile.size <= 50 * 1024 * 1024) { // 50 MB
+      try {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const fileDataBase64 = reader.result.split(',')[1];
+          const data = { file: fileDataBase64, title: "Audio Title" }; // Replace with actual title input if needed
+          try {
+            await handleRequest(`${API_URL}/upload/audio`, 'POST', data);
+            handleCloseModal();
+          } catch (error) {
+            console.error('Failed to upload audio:', error);
+          }
+        };
+        reader.readAsDataURL(audioFile);
+      } catch (error) {
+        console.error('Failed to upload audio:', error);
+      }
+    }
+  };
+
+  const handleArticleUpload = async (e) => {
+    e.preventDefault();
+    if (articleContent.title && articleContent.content) {
+      try {
+        await handleRequest(`${API_URL}/upload/article`, 'POST', articleContent);
+        handleCloseModal();
+      } catch (error) {
+        console.error('Failed to upload article:', error);
+      }
+    }
+  };
+
+  return (
+    <div>
+      {/* Your existing JSX code for displaying posts, comments, etc. */}
+
+      <button onClick={() => handleOpenModal("profile")}>Edit Profile</button>
+      <button onClick={() => handleOpenModal("post")}>Add Post</button>
+      <button onClick={() => handleOpenModal("interest")}>Add Interest</button>
+      <button onClick={() => handleOpenModal("video")}>Upload Video</button>
+      <button onClick={() => handleOpenModal("audio")}>Upload Audio</button>
+      <button onClick={() => handleOpenModal("article")}>Upload Article</button>
 
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2 className="modal-title">{modalType === 'createProfile' ? 'Create Profile' : modalType === 'addPost' ? 'Add Post' : modalType === 'addInterest' ? 'Add Interest' : 'Wishlist'}</h2>
-            {modalType === 'createProfile' && (
-              <form onSubmit={handleProfileUpdate} className="modal-form">
-                <label>
-                  Name:
-                  <input
-                    type="text"
-                    name="name"
-                    value={profileData.name}
-                    onChange={handleProfileChange}
-                    required
-                    className="modal-input"
-                  />
-                </label>
-                <label>
-                  Email:
-                  <input
-                    type="email"
-                    name="email"
-                    value={profileData.email}
-                    onChange={handleProfileChange}
-                    required
-                    className="modal-input"
-                  />
-                </label>
-                <button type="submit" className="modal-submit-button">Update Profile</button>
-              </form>
-            )}
-            {modalType === 'addPost' && (
-              <form onSubmit={handleAddPost} className="modal-form">
-                <label>
-                  Title:
-                  <input
-                    type="text"
-                    name="title"
-                    value={newPost.title}
-                    onChange={(e) => setNewPost(prevPost => ({ ...prevPost, title: e.target.value }))}
-                    required
-                    className="modal-input"
-                  />
-                </label>
-                <label>
-                  Description:
-                  <textarea
-                    name="description"
-                    value={newPost.description}
-                    onChange={(e) => setNewPost(prevPost => ({ ...prevPost, description: e.target.value }))}
-                    required
-                    className="modal-textarea"
-                  />
-                </label>
-                <label>
-                  Link:
-                  <input
-                    type="url"
-                    name="link"
-                    value={newPost.link}
-                    onChange={(e) => setNewPost(prevPost => ({ ...prevPost, link: e.target.value }))}
-                    required
-                    className="modal-input"
-                  />
-                </label>
-                <label>
-                  Thumbnail URL:
-                  <input
-                    type="url"
-                    name="thumbnail"
-                    value={newPost.thumbnail}
-                    onChange={(e) => setNewPost(prevPost => ({ ...prevPost, thumbnail: e.target.value }))}
-                    required
-                    className="modal-input"
-                  />
-                </label>
-                <button type="submit" className="modal-submit-button">Post</button>
-              </form>
-            )}
-            {modalType === 'addInterest' && (
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleAddInterest();
-              }} className="modal-form">
-                <input
-                  type="text"
-                  placeholder="New Interest"
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                  required
-                  className="modal-input"
-                />
-                <button type="submit" className="modal-submit-button">Add Interest</button>
-              </form>
-            )}
-            {modalType === 'viewWishlist' && (
-              <div className="wishlist-view">
-                <button onClick={handleClearWishlist} className="clear-wishlist-button">
-                  Clear Wishlist
-                </button>
-                <ul className="wishlist-list">
-                  {wishlist.map((item, index) => (
-                    <li key={index} className="wishlist-item">
-                      {/* Display post content or details here if needed */}
-                      {posts.find(post => post.id === item.contentId)?.title || 'Post removed'}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <button onClick={handleCloseModal} className="modal-close">
-              <IoMdClose />
-            </button>
-          </div>
+        <div className="modal">
+          <IoMdClose className="close-icon" onClick={handleCloseModal} />
+          {modalType === "profile" && (
+            <form onSubmit={handleProfileUpdate}>
+              <input type="text" name="name" value={profileData.name} onChange={handleProfileChange} placeholder="Name" />
+              <input type="email" name="email" value={profileData.email} onChange={handleProfileChange} placeholder="Email" />
+              <button type="submit">Update Profile</button>
+            </form>
+          )}
+          {modalType === "post" && (
+            <form onSubmit={handleAddPost}>
+              <input type="text" name="title" value={newPost.title} onChange={(e) => setNewPost({ ...newPost, title: e.target.value })} placeholder="Post Title" />
+              <input type="text" name="description" value={newPost.description} onChange={(e) => setNewPost({ ...newPost, description: e.target.value })} placeholder="Post Description" />
+              <input type="text" name="link" value={newPost.link} onChange={(e) => setNewPost({ ...newPost, link: e.target.value })} placeholder="Post Link" />
+              <input type="text" name="thumbnail" value={newPost.thumbnail} onChange={(e) => setNewPost({ ...newPost, thumbnail: e.target.value })} placeholder="Post Thumbnail" />
+              <button type="submit">Add Post</button>
+            </form>
+          )}
+          {modalType === "interest" && (
+            <div>
+              <input type="text" value={newInterest} onChange={(e) => setNewInterest(e.target.value)} placeholder="New Interest" />
+              <button onClick={handleAddInterest}>Add Interest</button>
+            </div>
+          )}
+          {modalType === "video" && (
+            <form onSubmit={handleVideoUpload}>
+              <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files[0])} />
+              <button type="submit">Upload Video</button>
+            </form>
+          )}
+          {modalType === "audio" && (
+            <form onSubmit={handleAudioUpload}>
+              <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files[0])} />
+              <button type="submit">Upload Audio</button>
+            </form>
+          )}
+          {modalType === "article" && (
+            <form onSubmit={handleArticleUpload}>
+              <input type="text" value={articleContent.title} onChange={(e) => setArticleContent({ ...articleContent, title: e.target.value })} placeholder="Article Title" />
+              <textarea value={articleContent.content} onChange={(e) => setArticleContent({ ...articleContent, content: e.target.value })} placeholder="Article Content" />
+              <button type="submit">Upload Article</button>
+            </form>
+          )}
         </div>
       )}
     </div>

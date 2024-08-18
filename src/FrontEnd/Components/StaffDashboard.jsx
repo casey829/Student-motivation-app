@@ -5,384 +5,397 @@ import { RiFileMusicLine, RiArticleLine, RiVideoLine } from 'react-icons/ri';
 import { IoIosLogOut } from 'react-icons/io';
 import { BiEdit } from 'react-icons/bi';
 import { CiFlag1 } from 'react-icons/ci';
-import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from 'react-icons/ai';
 
 function StaffDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(""); 
+  const [modalType, setModalType] = useState("");
   const [contentType, setContentType] = useState("");
   const [contentData, setContentData] = useState({
     id: "",
     title: "",
     description: "",
-    link: ""
+    link: "",
+    file: null
   });
   const [contentList, setContentList] = useState({
-    Videos: [],
-    Audios: [],
-    Articles: []
+    video: [],
+    audio: [],
+    article: []
   });
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedContent, setSelectedContent] = useState(null); 
   const [profileData, setProfileData] = useState({
-    name: "",
-    UserId: ""
+    userName: "",
+    email: "",
+    password: ""
   });
   const [profiles, setProfiles] = useState([]);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
-  // Fetch stored data from local storage
   useEffect(() => {
-    const storedContentList = localStorage.getItem('contentList');
-    const storedCategories = localStorage.getItem('categories');
-    const storedProfiles = localStorage.getItem('profiles');
+    const fetchData = async () => {
+      const token = localStorage.getItem('access_token');
+      try {
+        const [contentResponse, categoriesResponse, profilesResponse] = await Promise.all([
+          fetch('http://127.0.0.1:5000/content', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch('http://127.0.0.1:5000/api/categories', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch('http://127.0.0.1:5000/profile', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        ]);
 
-    if (storedContentList) {
-      setContentList(JSON.parse(storedContentList));
-    }
-    if (storedCategories) {
-      setCategories(JSON.parse(storedCategories));
-    }
-    if (storedProfiles) {
-      setProfiles(JSON.parse(storedProfiles));
-    }
+        if (!contentResponse.ok || !categoriesResponse.ok || !profilesResponse.ok) {
+          throw new Error('Network response was not ok.');
+        }
+
+        const contentData = await contentResponse.json();
+        const categoriesData = await categoriesResponse.json();
+        const profilesData = await profilesResponse.json();
+
+        setContentList(contentData);
+        setCategories(categoriesData);
+        setProfiles(profilesData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Helper function for API requests
-  const handleRequest = async (url, method, body = null) => {
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : null
-      });
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`Error with ${method} request:`, error);
-      throw error;
-    }
-  };
-
-  // Handle creating a new profile
-  const handleCreateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await handleRequest("http://localhost:3000/users", 'POST', profileData);
-      if (response.success) {
-        alert("Profile created successfully!");
-
-        const newProfile = {
-          name: profileData.name,
-          UserId: profileData.UserId,
-          id: response.data.id,
-        };
-
-        const updatedProfiles = [...profiles, newProfile];
-        setProfiles(updatedProfiles);
-        localStorage.setItem('profiles', JSON.stringify(updatedProfiles));
-
-        handleCloseModal();
-      } else {
-        alert(`Error: ${response.message}`);
-      }
-    } catch (error) {
-      console.error("Error creating profile:", error);
-      alert("An error occurred while creating the profile.");
-    }
-  };
-
-  // Handle creating new content
   const handleCreateContent = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('title', contentData.title);
+    formData.append('file', contentData.file);
+
+    const token = localStorage.getItem('access_token');
+    
     try {
-      const response = await handleRequest(`http://localhost:3000/content/${selectedCategory}`, 'POST', contentData);
-      if (response.success) {
+      const response = await fetch(`http://127.0.0.1:5000/upload/${contentType}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      const result = await response.json();
+
+      if (response.ok) {
         const updatedContentList = { 
           ...contentList, 
-          [selectedCategory]: [...(contentList[selectedCategory] || []), contentData] 
+          [contentType]: [...(contentList[contentType] || []), result.data] 
         };
-        localStorage.setItem('contentList', JSON.stringify(updatedContentList));
         setContentList(updatedContentList);
         handleCloseModal();
       } else {
-        alert(`Error: ${response.message}`);
+        alert(`Error: ${result.message}`);
       }
     } catch (error) {
       console.error("Error creating content:", error.message);
     }
   };
 
-  // Handle editing existing content
-  const handleEditContent = async (e) => {
+  const handleCreateProfile = async (e) => {
     e.preventDefault();
-    try {
-      const response = await handleRequest(`http://localhost:3000/content/${contentData.id}`, 'PUT', contentData);
-      if (!response.success) throw new Error(`Error: ${response.message}`);
+    const token = localStorage.getItem('access_token');
+    const bodyData = {
+      userName: profileData.userName,
+      email: profileData.email,
+      password: profileData.password
+    };
 
-      const updatedContentList = {
-        ...contentList,
-        [selectedCategory]: contentList[selectedCategory].map(item =>
-          item.id === contentData.id ? contentData : item
-        )
-      };
-      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
-      setContentList(updatedContentList);
-      handleCloseModal();
+    try {
+      const response = await fetch('http://127.0.0.1:5000/create-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(bodyData)
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Profile created successfully.');
+        handleCloseModal();
+      } else {
+        alert(`Error: ${result.message}`);
+      }
     } catch (error) {
-      console.error("Error editing content:", error.message);
+      console.error("Error creating profile:", error.message);
     }
   };
 
-  // Handle opening modals
-  const handleOpenModal = (type, content = null) => {
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    const { name, description } = newCategory;
+
+    if (!name || !description || description.length < 5) {
+      alert("Category name and description are required, and description must be at least 5 characters long.");
+      return;
+    }
+
+    if (categories.find(cat => cat.name === name)) {
+      alert("Category already exists.");
+      return;
+    }
+
+    const updatedCategories = [...categories, { name, description }];
+    setCategories(updatedCategories);
+    setNewCategory({ name: '', description: '' });
+    setIsCategoryModalOpen(false);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://127.0.0.1:5000/create-category', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, description })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert("Category added successfully!");
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error adding category:', error);
+      alert('Failed to add category. Please try again.');
+    }
+  };
+
+  const handleOpenModal = (type, category = "") => {
     setModalType(type);
     if (type === 'createContent') {
-      setContentType(type);
-    }
-    if (content) {
-      setContentData(content);
-      setSelectedContent(content);
+      setContentType(category);
+      setContentData({ id: "", title: "", description: "", link: "", file: null });
+    } else if (type === 'createProfile') {
+      setProfileData({ userName: "", email: "", password: "" });
     }
     setIsModalOpen(true);
   };
 
-  // Handle closing modals
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setContentType("");
-    setContentData({ id: "", title: "", description: "", link: "" });
-    setProfileData({ name: "", UserId: "" });
-    setSelectedCategory("");
-    setSelectedContent(null);
+    setContentData({ id: "", title: "", description: "", link: "", file: null });
+    setProfileData({ userName: "", email: "", password: "" });
   };
 
-  // Handle changes in content input fields
+  const handleOpenCategoryModal = () => {
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setNewCategory({ name: '', description: '' });
+  };
+
   const handleContentChange = (e) => {
     const { name, value } = e.target;
     setContentData(prevData => ({ ...prevData, [name]: value }));
   };
 
-  // Handle changes in profile input fields
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prevData => ({ ...prevData, [name]: value }));
   };
 
-  // Handle changes in category selection
   const handleCategoryChange = (e) => {
-    setSelectedCategory(e.target.value);
+    const { name, value } = e.target;
+    setNewCategory(prevData => ({ ...prevData, [name]: value }));
   };
 
-  // Handle adding a new category
-  const handleAddCategory = () => {
-    const newCategory = prompt("Enter new category name:");
-    if (newCategory && !categories.includes(newCategory)) {
-      const updatedCategories = [...categories, newCategory];
-      localStorage.setItem('categories', JSON.stringify(updatedCategories));
-      setCategories(updatedCategories);
-    }
-  };
+  function handleLogout() {
+    const token = localStorage.getItem('access_token');
 
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = '/';  // Redirect to the homepage
-  };
+    fetch('http://127.0.0.1:5000/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(res => {
+        console.log(res);
+        localStorage.clear();
+        window.location.href = '/';  // Redirect to the homepage
+      })
+      .catch(error => {
+        console.error("Error logging out:", error);
+        alert("Something went wrong");
+      });
+  }
 
   return (
-    <div className="dashboard-container">
-      <div className="sidebar">
-        <div className="logo">Logo</div>
-        <div className="sidebar-item">
-          <MdOutlineSpaceDashboard className="sidebar-icon" />
-          <span className="sidebar-text">Dashboard</span>
+    <div style={{ display: 'flex' }}>
+      <div style={{ width: '200px', backgroundColor: '#f4f4f4', padding: '20px' }}>
+        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>Logo</div>
+        <div style={{ margin: '10px 0' }}>
+          <MdOutlineSpaceDashboard style={{ fontSize: '24px' }} />
+          <span>Dashboard</span>
         </div>
-        <p className="sidebar-item" onClick={() => handleOpenModal('createProfile')}>
-          <TiUserAdd className="sidebar-icon" />
-          <span className="sidebar-text">Create Profile</span>
-        </p>
-        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
-          <RiFileMusicLine className="sidebar-icon" />
-          <span className="sidebar-text">Add Audio</span>
-        </p>
-        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
-          <RiArticleLine className="sidebar-icon" />
-          <span className="sidebar-text">Add Article</span>
-        </p>
-        <p className="sidebar-item" onClick={() => handleOpenModal('createContent')}>
-          <RiVideoLine className="sidebar-icon" />
-          <span className="sidebar-text">Add Video</span>
-        </p>
-        <p className="sidebar-item" onClick={handleLogout}>
-          <IoIosLogOut className="sidebar-icon"/>
-          <span className="sidebar-text">Logout</span>
-        </p>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createProfile')}>
+          <TiUserAdd style={{ fontSize: '24px' }} />
+          <span>Create Profile</span>
+        </div>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'audio')}>
+          <RiFileMusicLine style={{ fontSize: '24px' }} />
+          <span>Add Audio</span>
+        </div>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'article')}>
+          <RiArticleLine style={{ fontSize: '24px' }} />
+          <span>Add Article</span>
+        </div>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={() => handleOpenModal('createContent', 'video')}>
+          <RiVideoLine style={{ fontSize: '24px' }} />
+          <span>Add Video</span>
+        </div>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={handleOpenCategoryModal}>
+          <BiEdit style={{ fontSize: '24px' }} />
+          <span>Add Category</span>
+        </div>
+        <div style={{ margin: '10px 0', cursor: 'pointer' }} onClick={handleLogout}>
+          <IoIosLogOut style={{ fontSize: '24px' }} />
+          <span>Logout</span>
+        </div>
       </div>
-
-      <div className="main-content">
-        {Object.keys(contentList).map((category) => (
-          <div className={category.toLowerCase()} key={category}>
-            <ul>
-              {contentList[category].map((content, index) => (
-                <li key={index}>
-                  <h4>{content.title}</h4>
-                  <p>{content.description}</p>
-                  {content.link && <a href={content.link} target="_blank" rel="noopener noreferrer">View More</a>}
-                  <button onClick={() => handleOpenModal('editContent', content)}>
-                    <BiEdit /> Edit
-                  </button>
-                  <button onClick={async () => {
-                    try {
-                      await handleRequest(`http://localhost:3000/content/${content.id}`, 'DELETE');
-                      const updatedContentList = {
-                        ...contentList,
-                        [category]: contentList[category].filter(item => item.id !== content.id)
-                      };
-                      localStorage.setItem('contentList', JSON.stringify(updatedContentList));
-                      setContentList(updatedContentList);
-                    } catch (error) {
-                      console.error("Error deleting content:", error.message);
-                    }
-                  }}>
-                    <CiFlag1 /> Delete
-                  </button>
-                  <button onClick={async () => {
-                    try {
-                      await handleRequest(`http://localhost:3000/content/like/${content.id}`, 'POST');
-                    } catch (error) {
-                      console.error("Error liking content:", error.message);
-                    }
-                  }}>
-                    <AiOutlineLike /> Like
-                  </button>
-                  <button onClick={async () => {
-                    try {
-                      await handleRequest(`http://localhost:3000/content/dislike/${content.id}`, 'POST');
-                    } catch (error) {
-                      console.error("Error disliking content:", error.message);
-                    }
-                  }}>
-                    <AiOutlineDislike /> Dislike
-                  </button>
-                  <button onClick={async () => {
-                    const comment = prompt("Enter comment:");
-                    if (comment) {
-                      try {
-                        await handleRequest(`http://localhost:3000/content/comment/${content.id}`, 'POST', { comment });
-                      } catch (error) {
-                        console.error("Error commenting on content:", error.message);
-                      }
-                    }
-                  }}>
-                    <AiOutlineComment /> Comment
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <div style={{ flex: 1, padding: '20px' }}>
+        <h1>Content Management</h1>
+        <div>
+          <h2>Videos</h2>
+          <ul>
+            {(contentList.video || []).map(content => (
+              <li key={content.id}>{content.title || 'Untitled'}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2>Audio</h2>
+          <ul>
+            {(contentList.audio || []).map(content => (
+              <li key={content.id}>{content.title || 'Untitled'}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2>Articles</h2>
+          <ul>
+            {(contentList.article || []).map(content => (
+              <li key={content.id}>{content.title || 'Untitled'}</li>
+            ))}
+          </ul>
+        </div>
       </div>
-
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>{modalType === 'createProfile' ? "Create Profile" : modalType === 'editContent' ? "Edit Content" : `Create ${contentType}`}</h2>
-            <form onSubmit={modalType === 'createProfile' ? handleCreateProfile : modalType === 'editContent' ? handleEditContent : handleCreateContent}>
-              {modalType === 'createProfile' && (
-                <>
-                  <label>
-                    Name:
-                    <input
-                      type="text"
-                      name="name"
-                      value={profileData.name}
-                      onChange={handleProfileChange}
-                      required
-                    />
-                  </label>
-                  <label>
-                    User ID:
-                    <input
-                      type="text"
-                      name="UserId"
-                      value={profileData.UserId}
-                      onChange={handleProfileChange}
-                      required
-                    />
-                  </label>
-                </>
-              )}
-              {modalType === 'createContent' && (
-                <>
-                  <label>
-                    Title:
-                    <input
-                      type="text"
-                      name="title"
-                      value={contentData.title}
-                      onChange={handleContentChange}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Description:
-                    <textarea
-                      name="description"
-                      value={contentData.description}
-                      onChange={handleContentChange}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Link:
-                    <input
-                      type="url"
-                      name="link"
-                      value={contentData.link}
-                      onChange={handleContentChange}
-                    />
-                  </label>
-                </>
-              )}
-              {modalType === 'editContent' && (
-                <>
-                  <label>
-                    Title:
-                    <input
-                      type="text"
-                      name="title"
-                      value={contentData.title}
-                      onChange={handleContentChange}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Description:
-                    <textarea
-                      name="description"
-                      value={contentData.description}
-                      onChange={handleContentChange}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Link:
-                    <input
-                      type="url"
-                      name="link"
-                      value={contentData.link}
-                      onChange={handleContentChange}
-                    />
-                  </label>
-                </>
-              )}
-              <div className="modal-buttons">
-                <button type="submit">
-                  {modalType === 'createProfile' ? "Create Profile" : modalType === 'editContent' ? "Save Changes" : `Create ${contentType}`}
-                </button>
-                <button type="button" onClick={handleCloseModal}>Cancel</button>
-              </div>
+        <div style={{
+          position: 'fixed', top: '0', left: '0', right: '0', bottom: '0',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center'
+        }}>
+          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '400px' }}>
+            <h2>{modalType === 'createProfile' ? 'Create Profile' : `Add ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}</h2>
+            {modalType === 'createProfile' ? (
+              <form onSubmit={handleCreateProfile}>
+                <input
+                  type="text"
+                  name="userName"
+                  value={profileData.userName}
+                  onChange={handleProfileChange}
+                  placeholder="Username"
+                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
+                />
+                <input
+                  type="email"
+                  name="email"
+                  value={profileData.email}
+                  onChange={handleProfileChange}
+                  placeholder="Email"
+                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
+                />
+                <input
+                  type="password"
+                  name="password"
+                  value={profileData.password}
+                  onChange={handleProfileChange}
+                  placeholder="Password"
+                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
+                />
+                <button type="submit" style={{ padding: '10px', width: '100%' }}>Create Profile</button>
+              </form>
+            ) : (
+              <form onSubmit={handleCreateContent}>
+                <input
+                  type="text"
+                  name="title"
+                  value={contentData.title}
+                  onChange={handleContentChange}
+                  placeholder="Title"
+                  style={{ margin: '10px 0', padding: '10px', width: '100%' }}
+                />
+                {contentType === 'article' ? (
+                  <textarea
+                    name="description"
+                    value={contentData.description}
+                    onChange={handleContentChange}
+                    placeholder="Description"
+                    style={{ margin: '10px 0', padding: '10px', width: '100%', height: '100px' }}
+                  />
+                ) : (
+                  <input
+                    type="file"
+                    name="file"
+                    onChange={(e) => setContentData(prevData => ({ ...prevData, file: e.target.files[0] }))}
+                    style={{ margin: '10px 0', width: '100%' }}
+                  />
+                )}
+                <button type="submit" style={{ padding: '10px', width: '100%' }}>Submit</button>
+                <button type="button" onClick={handleCloseModal} style={{ padding: '10px', width: '100%', marginTop: '10px' }}>Close</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+      {isCategoryModalOpen && (
+        <div style={{
+          position: 'fixed', top: '0', left: '0', right: '0', bottom: '0',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center'
+        }}>
+          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '400px' }}>
+            <h2>Add Category</h2>
+            <form onSubmit={handleCreateCategory}>
+              <input
+                type="text"
+                name="name"
+                value={newCategory.name}
+                onChange={handleCategoryChange}
+                placeholder="Category Name"
+                style={{ margin: '10px 0', padding: '10px', width: '100%' }}
+              />
+              <textarea
+                name="description"
+                value={newCategory.description}
+                onChange={handleCategoryChange}
+                placeholder="Category Description"
+                style={{ margin: '10px 0', padding: '10px', width: '100%', height: '100px' }}
+              />
+              <button type="submit" style={{ padding: '10px', width: '100%' }}>Add Category</button>
+              <button type="button" onClick={handleCloseCategoryModal} style={{ padding: '10px', width: '100%', marginTop: '10px' }}>Close</button>
             </form>
           </div>
         </div>

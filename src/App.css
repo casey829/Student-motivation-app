@@ -1,41 +1,84 @@
-/* General styles for the landing page */
+/* Main container for the landing page */
 .landing-page {
   font-family: Arial, sans-serif;
-  color: #333;
-  text-align: center;
-}
-
-.header, .navigation, .logo {
   background-color: #f4f4f4;
-  padding: 10px;
+  color: #333;
+  margin: 0;
+  padding: 0;
 }
 
-.navigation a, .navigation button {
-  margin: 0 10px;
-  padding: 10px;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.navigation button {
+/* Header styling */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
   background-color: #007bff;
   color: #fff;
 }
 
-.navigation button:hover {
-  background-color: #0056b3;
+.header .logo {
+  font-size: 24px;
+  font-weight: bold;
 }
 
-.image-container img {
+.header .navigation {
+  display: flex;
+  gap: 15px;
+}
+
+.header .navigation a, .header .navigation button {
+  color: #fff;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.header .navigation button {
+  background-color: #0056b3;
+  padding: 8px 15px;
+  border-radius: 5px;
+}
+
+.header .menu-icon {
+  display: none; /* Hide the menu icon on larger screens */
+}
+
+/* Main content styling */
+.main-contents {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.main-contents .image-container img {
   max-width: 100%;
   height: auto;
+  border-radius: 8px;
 }
 
-.text-content h1, .text-content p {
-  margin: 20px;
+.main-contents .text-content {
+  max-width: 600px;
 }
 
+.main-contents .text-content h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.main-contents .text-content p {
+  line-height: 1.6;
+  font-size: 18px;
+}
+
+.main-contents .text-content h2 {
+  font-size: 24px;
+  color: #007bff;
+}
+
+/* Modal styling */
 .modal {
   position: fixed;
   top: 0;
@@ -44,19 +87,20 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 .modal-content {
   background: #fff;
   padding: 20px;
-  border-radius: 4px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
   position: relative;
-  width: 300px;
 }
 
-.close-button {
+.modal-content .close-button {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -64,24 +108,42 @@
   cursor: pointer;
 }
 
-form input {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+/* Form styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-form button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+button {
+  padding: 10px;
   background-color: #007bff;
   color: #fff;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-form button:hover {
+button:hover {
   background-color: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-contents {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header .menu-icon {
+    display: block;
+  }
 }

@@ -35,7 +35,6 @@ class User(db.Model, UserMixin, SerializerMixin):
             'username': self.username,
             'email': self.email,
             'role': self.role,
-            'active': self.active,
             'created_at': self.created_at
         }
     

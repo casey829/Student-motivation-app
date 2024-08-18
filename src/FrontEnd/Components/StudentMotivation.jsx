@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
-import AdminDashboard from './AdminDashboard';
-import StaffDashboard from './StaffDashboard';
-import StudentDashboard from './StudentDashboard';
+import { useNavigate } from 'react-router-dom';
 import image from "../Components/image/back_to_school_illustration.jpeg";
+
+const API_BASE_URL = 'http://127.0.0.1:5000';
+const SIGN_UP_URL = `${API_BASE_URL}/sign-up`;
+const LOGIN_URL = `${API_BASE_URL}/login`;
+const CONFIRM_EMAIL_URL = `${API_BASE_URL}/confirm-email`;
+
 const StudentMotivation = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('');
@@ -11,14 +14,17 @@ const StudentMotivation = () => {
     userName: '',
     email: '',
     password: '',
-    userType: ''
+    userType: '',
+    token: ''
   });
 
+  const [showTokenForm, setShowTokenForm] = useState(false);
   const navigate = useNavigate();
 
   const handleButtonClick = (type) => {
     setShowModal(true);
     setModalType(type);
+    if (type === 'signup') setShowTokenForm(false);
   };
 
   const handleCloseModal = () => {
@@ -27,8 +33,10 @@ const StudentMotivation = () => {
       userName: '',
       email: '',
       password: '',
-      userType: ''
+      userType: '',
+      token: ''
     });
+    setShowTokenForm(false);
   };
 
   const handleChange = (e) => {
@@ -41,70 +49,94 @@ const StudentMotivation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    let url = '';
-    let bodyData = {};
-  
-    if (modalType === 'signup') {
-      url = 'http://127.0.0.1:5000/sign-up';
-      bodyData = {
-        username: formData.userName,
-        email: formData.email,
-        password: formData.password,
-        userType: formData.userType.toLowerCase()
-      };
-    } else if (modalType === 'login') {
-      url = 'http://127.0.0.1:5000/login';
-      bodyData = {
-        email: formData.email,
-        password: formData.password
-      };
-    }
-    //log the body data before sending it to the server
-    console.log('Body Data:', JSON.stringify(bodyData));
-  
+    const url = modalType === 'signup' ? SIGN_UP_URL : LOGIN_URL;
+    const bodyData = modalType === 'signup'
+      ? {
+          username: formData.userName,
+          email: formData.email,
+          password: formData.password,
+          userType: formData.userType.toLowerCase()
+        }
+      : { email: formData.email, password: formData.password };
+
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyData)
       });
-  
-      // Log the response status and text for debugging
-      console.log('Response Status:', response.status);
-      const text = await response.text(); // Read response as text
-      console.log('Response Text:', text);
-  
-      // Try to parse the response text
-      const data = JSON.parse(text);
-  
+
+      const data = await response.json();
+
       if (response.ok) {
-        alert(`${modalType === 'signup' ? 'Sign Up' : 'Login'} successful!`);
-        if (modalType === 'login') {
-          if (data.role === 'admin') {
-            navigate('/admin-dashboard');
-          } else if (data.role === 'staff') {
-            navigate('/staff-dashboard');
-          } else if (data.role === 'student') {
-            navigate('/student-dashboard');
-          }
+        if (modalType === 'signup') {
+          alert('Sign Up successful! Please check your email to confirm your account.');
+          setShowTokenForm(true);
+        } else {
+          localStorage.setItem('access_token', data.access_token); // Store token
+          alert('Login successful!');
+          fetchData();
         }
       } else {
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again later.');
-    } finally {
-      handleCloseModal();
     }
   };
-  
+
+  const handleTokenSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(CONFIRM_EMAIL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: formData.token })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('access_token', data.access_token); // Store token
+        alert('Email confirmed and logged in successfully!');
+        fetchData();
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again later.');
+    }
+  };
+
+  const fetchData = async () => {
+    const token = localStorage.getItem('access_token');
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      navigate(`${data.role}-dashboard`);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <div className="landing-page">
-      <header className="headers">
+      <header className="header">
         <div className="logo">TeckStudy</div>
         <nav className="navigation">
           <a href="#" onClick={() => handleButtonClick('login')}>Admin</a>
@@ -142,7 +174,7 @@ const StudentMotivation = () => {
             <span className="close-button" onClick={handleCloseModal}>
               &times;
             </span>
-            {modalType === 'signup' && (
+            {modalType === 'signup' && !showTokenForm && (
               <form onSubmit={handleSubmit}>
                 <h3>Sign Up</h3>
                 <input
@@ -202,6 +234,20 @@ const StudentMotivation = () => {
                 <button type="submit">Submit</button>
               </form>
             )}
+            {showTokenForm && (
+              <form onSubmit={handleTokenSubmit}>
+                <h3>Confirm Email</h3>
+                <input
+                  type="text"
+                  name="token"
+                  placeholder="Enter the token from your email"
+                  value={formData.token}
+                  onChange={handleChange}
+                  required
+                />
+                <button type="submit">Confirm</button>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -209,15 +255,4 @@ const StudentMotivation = () => {
   );
 };
 
-const App = () => (
-  <Router>
-    <Routes>
-      <Route path="/" element={<StudentMotivation />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/staff-dashboard" element={<StaffDashboard />} />
-      <Route path="/student-dashboard" element={<StudentDashboard />} />
-    </Routes>
-  </Router>
-);
-
-export default App;
+export default StudentMotivation;
