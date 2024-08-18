@@ -13,6 +13,9 @@ from models import db, User, Category, Article, Video, Audio, Comment, Blacklist
 import traceback
 import base64
 import uuid
+import random
+import string
+import os 
 from datetime import datetime, timedelta
 app = Flask(__name__)
 CORS(app)
@@ -43,8 +46,10 @@ app.config['MAIL_DEFAULT_SENDER'] = 'alistairsmunene@gmail.com'
 # Initialising Flask-Mail
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-
-
+# Function to generate a random token
+def generate_token(length=6):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
 # user_id = get_jwt_identity()
 # Homepage Routes
 
@@ -53,80 +58,124 @@ s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 def home_page():
     return jsonify({"message": "Welcome to TechStudy"}), 200
 
-# User Sign Up
 @app.route('/sign-up', methods=['POST'])
 def user_sign_up():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        user_type = data.get('userType')
+        username = data.get('username')
+        email = data.get('email').strip().lower()  # Ensure email is stripped of extra spaces and in lower case
+        password = data.get('password')
 
-    user_type = data.get('userType')  # Adjusted to match client-side
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
+        if not all([user_type, username, email, password]):
+            return jsonify({'error': 'Missing required fields'}), 400
 
-    # Basic validation
-    if not all([user_type, username, email, password]):
-        return jsonify({'error': 'Missing required fields'}), 400
+        if user_type not in ['student', 'staff']:
+            return jsonify({'error': 'Invalid user type'}), 400
 
-    if user_type not in ['student', 'staff']:
-        return jsonify({'error': 'Invalid user type'}), 400
-    
-    if User.query.filter_by(email=email).first():
-        return jsonify({'error': 'Email already exists'}), 400
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'error': 'Email already exists'}), 400
 
-    token = s.dumps(email, salt='email-confirm')
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = User(
-        username=username,
-        email=email,
-        password_hash=hashed_password,
-        role=user_type,
-        is_verified=False,  
-        verification_token= token ,# Store token
+        token = generate_token()  # Use the generate_token function
+        hashed_password = generate_password_hash(password)
+        new_user = User(
+            username=username,
+            email=email,
+            password_hash=hashed_password,
+            role=user_type,
+            is_verified=False,
+            verification_token=token
+        )
         
-    )
-    
-    db.session.add(new_user)
-    db.session.commit()
+        db.session.add(new_user)
+        db.session.commit()
 
-    msg = Message('Welcome to TechStudy', recipients=[email])
-    link = url_for('confirm_email', token=token, _external=True)
-    msg.body = f'Please click the link below to confirm your email: {link}'
+        msg = Message('Welcome to TechStudy', recipients=[email])
+        msg.body = (f'Welcome {username}!\n\n'
+                    'Please use the following token to confirm your email address:\n'
+                    f'Token: {token}\n\n'
+                    'Kindly input this token in the provided endpoint to verify your email.')
 
-    try:
-        mail.send(msg)
+        try:
+            mail.send(msg)
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Email could not be sent.', 'details': str(e)}), 500
+
+        return jsonify({
+            'success': f'{user_type.capitalize()} has been created successfully. Please check your email to confirm your account.'
+        }), 201
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Email could not be sent.'}), 500
+        return jsonify({'error': 'An internal server error occurred.', 'details': str(e)}), 500
 
-    return jsonify({
-        'success': f'{user_type.capitalize()} has been created successfully. Please check your email to confirm your account.'
-    }), 201
-
-# Confirm Email
-@app.route('/confirm-email/<token>', methods=['GET'])
-def confirm_email(token):
+@app.route('/confirm-email', methods=['POST'])
+def confirm_email():
     try:
-        # Verify the token
-        email = s.loads(token, salt='email-confirm', max_age=3600)
-        user = User.query.filter_by(email=email).first()
+        data = request.get_json()
+        token = data.get('token')
 
+        if not token:
+            return jsonify({'error': 'Token is required'}), 400
+
+        # Find the user with the given token
+        user = User.query.filter_by(verification_token=token).first()
         if user:
-            if user.verification_token == token:
-                # Mark the user as verified
-                user.is_verified = True
-                user.verification_token = token  # Reset the verification token
-                user.token_expiry = datetime.utcnow() + timedelta(hours=1)
-                db.session.commit()
-                print('Email confirmed! You can now log in.')
-                return jsonify({'message': 'Email confirmed! You can now log in.'}), 200
-            else:
-                return jsonify({'error': 'Invalid or expired token.'}), 400
+            user.is_verified = True
+            user.verification_token = token # Clear the token after successful verification
+            db.session.commit()
+            return jsonify({'message': 'Email confirmed successfully! You can now log in.'}), 200
         else:
-            return jsonify({'error': 'User not found.'}), 404
-    except SignatureExpired:
-        return jsonify({'error': 'The token has expired.'}), 400
+            return jsonify({'error': 'Invalid or expired token'}), 400
     except Exception as e:
-        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+        return jsonify({'error': 'An internal server error occurred.', 'details': str(e)}), 500
+@app.route('/create-profile', methods=['POST'])
+def create_profile():
+    try:
+        data = request.get_json()
+        username = data.get('userName')
+        email = data.get('email').strip().lower()
+        password = data.get('password')
+
+        if not all([username, email, password]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'error': 'Email already exists'}), 400
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(
+            username=username,
+            email=email,
+            password_hash=hashed_password,
+            role='student',
+            is_verified=True,
+            verification_token=None
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Send confirmation email
+        msg = Message('Profile Created Successfully',recipients=[email])
+        msg.body = (f"Hello {username},\n\n"
+                    f"Your profile has been created successfully.\n\n"
+                    f"Username: {username}\n"
+                    f"Password: {password}\n\n"
+                    "Thank you for registering!")
+        try:
+            mail.send(msg)
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Email could not be sent.', 'details': str(e)}), 500
+
+        return jsonify({
+            'success': f'{username.capitalize()} profile created successfully.'
+        }), 201
+    except Exception as e:
+        return jsonify({'error': 'An internal server error occurred.', 'details': str(e)}), 500
+
 
 # User Login
 @app.route('/login', methods=['POST']) #works fine
@@ -179,7 +228,7 @@ def staff_dashboard():
     
 
 # Student Dashboard
-@app.route('/student/dashboard', methods=['GET'])
+@app.route('/dashboard-student', methods=['GET'])
 @jwt_required()
 def student_dashboard():
     user_id = get_jwt_identity()
@@ -235,7 +284,7 @@ def logout():
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 # Create Category
-@app.route('/create/category', methods=['POST']) #works fine
+@app.route('/create-category', methods=['POST'])
 @jwt_required()
 def create_category():
     user_id = get_jwt_identity()
@@ -248,6 +297,12 @@ def create_category():
     name = data.get('name')
     description = data.get('description')
 
+    if not name or len(name) < 3:
+        return jsonify({"message": "Category name is required and must be at least 3 characters long"}), 400
+    
+    if not description or len(description) < 5:
+        return jsonify({"message": "Category description is required and must be at least 5 characters long"}), 400
+
     if Category.query.filter_by(name=name).first():
         return jsonify({"message": "Category already exists"}), 400
     
@@ -256,6 +311,21 @@ def create_category():
     db.session.commit()
     return jsonify({"message": "Category created successfully"}), 201
 
+#Find Category
+
+@app.route('/categories', methods=['GET'])
+@jwt_required()
+def get_all_categories():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    categories = Category.query.all()
+    categories_list = [{'id': cat.id, 'name': cat.name, 'description': cat.description} for cat in categories]
+
+    return jsonify(categories_list), 200
 # Subscribe Category
 @app.route('/subscribe/category', methods=['POST']) #works fine
 @jwt_required()
@@ -283,41 +353,51 @@ def subscribe_category():
     db.session.commit()
     return jsonify({"message": "Category subscribed successfully"}), 200
 
-
-# Upload Content Video
 @app.route('/upload/video', methods=['POST'])
 @jwt_required()
 def upload_video():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if user is None:
         return jsonify({"message": "Unauthorized"}), 401
 
     try:
-        data = request.get_json()
-        file_data_base64 = data.get('file')
-        title = data.get('title')
+        # Get form data and file
+        title = request.form.get('title')
+        description = request.form.get('description')
+        category_name = request.form.get('category')
+        file = request.files.get('file')
 
-        if not file_data_base64 or not title:
-            return jsonify({"error": "File data and title are required"}), 400
+        if not file or not title or not description or not category_name:
+            return jsonify({"error": "File, title, description, and category are required"}), 400
 
-        # Decode the base64 file data
-        file_data = base64.b64decode(file_data_base64)
-        filename = f"{uuid.uuid4().hex}_video"
+        # Read file data
+        file_data = file.read()
+        filename = f"{uuid.uuid4().hex}_video{os.path.splitext(file.filename)[1]}"  # Preserve file extension
 
-        max_size = 100 * 1024 * 1024  # 100 MB
+        # Check file size (50 MB limit)
+        max_size = 50 * 1024 * 1024
         if len(file_data) > max_size:
-            return jsonify({"error": "File size exceeds the 100 MB limit"}), 400
+            return jsonify({"error": "File size exceeds the 50 MB limit"}), 400
 
-        new_content = Video(
-            filename=filename,
+        # Get category ID from category name
+        category = Category.query.filter_by(name=category_name).first()
+        if not category:
+            return jsonify({"error": "Invalid category name"}), 400
+
+        category_id = category.id
+
+        # Create and save new video record
+        new_video = Video(
+            title=filename,
             file_data=file_data,
-            description=title,
+            description=description,
+            category_id=category_id,
             user_id=user_id,
         )
 
-        db.session.add(new_content)
+        db.session.add(new_video)
         db.session.commit()
         return jsonify({"success": "Video uploaded successfully"}), 201
 
@@ -326,41 +406,48 @@ def upload_video():
         traceback_str = traceback.format_exc()
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    
 # Upload Content Audio
 @app.route('/upload/audio', methods=['POST'])
 @jwt_required()
 def upload_audio():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if user is None:
         return jsonify({"message": "Unauthorized"}), 401
 
     try:
-        data = request.get_json()
-        file_data_base64 = data.get('file')
-        title = data.get('title')
+        # Get form data and file
+        title = request.form.get('title')
+        description = request.form.get('description')
+        category_id = request.form.get('category_id')
+        file = request.files.get('file')
 
-        if not file_data_base64 or not title:
-            return jsonify({"error": "File data and title are required"}), 400
+        if not file or not title or not description or not category_id:
+            return jsonify({"error": "File, title, description, and category are required"}), 400
 
-        # Decode the base64 file data
-        file_data = base64.b64decode(file_data_base64)
-        filename = f"{uuid.uuid4().hex}_audio"
+        # Validate category ID
+        category = Category.query.get(category_id)
+        if not category:
+            return jsonify({"error": "Invalid category ID"}), 400
+
+        file_data = file.read()
+        filename = f"{uuid.uuid4().hex}_audio{os.path.splitext(file.filename)[1]}"  # Preserve file extension
 
         max_size = 50 * 1024 * 1024  # 50 MB
         if len(file_data) > max_size:
             return jsonify({"error": "File size exceeds the 50 MB limit"}), 400
 
-        new_content = Audio(
+        new_audio = Audio(
+            title=title,
+            description=description,
             filename=filename,
             file_data=file_data,
-            description=title,
+            category_id=category_id,
             user_id=user_id,
         )
 
-        db.session.add(new_content)
+        db.session.add(new_audio)
         db.session.commit()
         return jsonify({"success": "Audio uploaded successfully"}), 201
 
@@ -369,27 +456,31 @@ def upload_audio():
         traceback_str = traceback.format_exc()
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
     
 # Upload Content Article
 @app.route('/upload/article', methods=['POST'])
 @jwt_required()
 def upload_article():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)  # Updated for SQLAlchemy 2.0
 
     if user is None:
         return jsonify({"message": "Unauthorized"}), 401
 
     try:
-        data = request.get_json()
-        content_text = data.get('content')
-        title = data.get('title')
+        title = request.form.get('title')
+        content = request.files.get('content')
 
-        if not content_text or not title:
-            return jsonify({"error": "Title and content are required"}), 400
+        if not file or not title:
+            return jsonify({"error": "File and title are required"}), 400
 
-        if len(content_text) > 5000:
-            return jsonify({"error": "Content exceeds the 5000 character limit"}), 400
+        file_data = file.read()
+        filename = f"{uuid.uuid4().hex}_audio{os.path.splitext(file.filename)[1]}"  # Preserve file extension
+
+        max_size = 50 * 1024 * 1024  # 50 MB
+        if len(file_data) > max_size:
+            return jsonify({"error": "File size exceeds the 50 MB limit"}), 400
 
         new_content = Article(
             title=title,
@@ -407,55 +498,39 @@ def upload_article():
         print(f"An error occurred: {traceback_str}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
-# Get Content Video
-@app.route('/content/video/<int:content_id>', methods=['GET'])
-@jwt_required()
-def get_video(content_id):
+
+@app.route('/videos', methods=['GET'])
+def get_videos():
     try:
-        content = Video.query.get_or_404(content_id)
-        return send_file(
-            BytesIO(content.file_data),
-            mimetype='video/mp4',
-            as_attachment=True,
-            download_name=f"{content.title}.mp4"
-        )
+        videos = Video.query.all()
+        if not videos:
+            return jsonify({'message': 'No videos available.'}), 404
+        
+        serialized_videos = [video.to_dict() for video in videos]
+        return jsonify({'videos': serialized_videos}), 200
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
+@app.route('/audios', methods=['GET'])
+def get_audios():
+    audios = Audio.query.all()
+    if not audios:
+        return jsonify({'message': 'No audios available.'}), 404
 
-# Get Content Audio
-@app.route('/content/audio/<int:content_id>', methods=['GET'])
-@jwt_required()
-def get_audio(content_id):
+    serialized_audios = [audio.to_dict() for audio in audios]
+    return jsonify({'audios': serialized_audios}), 200
+
+@app.route('/articles', methods=['GET'])
+def get_articles():
     try:
-        content = Audio.query.get_or_404(content_id)
-        return send_file(
-            BytesIO(content.file_data),
-            mimetype='audio/mpeg',
-            as_attachment=True,
-            download_name=f"{content.title}.mp3"
-        )
+        articles = Article.query.all()
+        if not articles:
+            return jsonify({'message': 'No articles available.'}), 404
+        
+        serialized_articles = [article.to_dict() for article in articles]
+        return jsonify({'articles': serialized_articles}), 200
     except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-from flask import jsonify
-from flask_jwt_extended import jwt_required
-from models import Article
-
-
-# Get Article
-@app.route('/content/article/<int:content_id>', methods=['GET'])
-@jwt_required()
-def get_article(content_id):
-    try:
-        content = Article.query.get_or_404(content_id)
-        return jsonify({
-            "title": content.title,
-            "content": content.content,
-            "author_id": content.user_id,
-            "created_at": content.created_at
-        }), 200
-    except Exception as e:
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        return jsonify({'message': f'Error: {str(e)}'}), 500
 
 
 # Comment Resource
